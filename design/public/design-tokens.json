@@ -1,0 +1,97 @@
+{
+  "name": "Abaynou Tatawasal Public UI",
+  "direction": {
+    "default": "rtl",
+    "arabic": "rtl",
+    "french": "ltr"
+  },
+  "font": {
+    "family": "IBM Plex Sans Arabic",
+    "fallback": "Arial, sans-serif",
+    "weights": [400, 500, 600, 700],
+    "bodySize": "16px",
+    "bodyLineHeight": 1.65,
+    "heroTitle": {
+      "desktop": "47px",
+      "wideTablet": "40px",
+      "tablet": "35px",
+      "mobile": "30px",
+      "lineHeight": 1.4,
+      "weight": 700
+    },
+    "infoTitle": {
+      "desktop": "40px",
+      "tablet": "34px",
+      "mobile": "30px",
+      "lineHeight": 1.4,
+      "weight": 700
+    },
+    "sectionTitle": {
+      "desktop": "33px",
+      "mobile": "28px",
+      "lineHeight": 1.45,
+      "weight": 700
+    }
+  },
+  "color": {
+    "green700": "#0F5A42",
+    "green800": "#174F3F",
+    "sage100": "#EAF3EE",
+    "ivory50": "#FAF8F2",
+    "sand100": "#F4EFE4",
+    "surfaceSoft": "#F5F8F6",
+    "ink900": "#202622",
+    "ink600": "#65706B",
+    "line200": "#DFE3DF",
+    "blue600": "#245F9E",
+    "amber700": "#A86600",
+    "orange700": "#B84D22",
+    "white": "#FFFFFF",
+    "chikayaBackground": "#FAF7EF",
+    "chikayaBorder": "#E7DFCF",
+    "scopeBackground": "#FFFCF6",
+    "scopeBorder": "#E4DBC9",
+    "emergencyBackground": "#FFF9EF",
+    "emergencyBorder": "#ECD2AA",
+    "helpBackground": "#F5FAF7",
+    "helpBorder": "#CFDCD5"
+  },
+  "layout": {
+    "containerMax": "1240px",
+    "infoContainerMax": "1160px",
+    "proseMax": "800px",
+    "introMax": "830px",
+    "desktopGutter": "24px",
+    "mobileGutter": "16px",
+    "headerDesktop": "78px",
+    "headerMobile": "68px",
+    "buttonHeight": "46px",
+    "minimumTarget": "44px"
+  },
+  "radius": {
+    "control": "7px",
+    "button": "8px",
+    "card": "9px",
+    "panel": "10px",
+    "auth": "13px"
+  },
+  "border": {
+    "default": "1px solid #DFE3DF"
+  },
+  "shadow": {
+    "approvedElevated": "0 10px 30px rgba(21, 55, 44, 0.07)",
+    "mobileMenu": "0 12px 24px rgba(21, 55, 44, 0.10)"
+  },
+  "breakpoint": {
+    "wideTablet": "1100px",
+    "tablet": "820px",
+    "mobile": "600px",
+    "minimum": "320px"
+  },
+  "assets": {
+    "headerLogo": "assets/commune-mark-abaynou.png",
+    "formalLogo": "assets/commune-emblem-abaynou.png",
+    "architecture": "assets/abaynou-architecture-transparent.png",
+    "zelligeEdge": "assets/zellige-edge-transparent.png"
+  }
+}
