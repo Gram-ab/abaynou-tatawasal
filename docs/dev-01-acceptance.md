@@ -95,7 +95,7 @@ Any intentional change to the frozen DEV-01 behavior requires explicit project-o
 
 The accepted source baseline is the local Git commit identified below. The value is recorded after creation of the initial baseline commit so that it refers to an immutable commit object.
 
-**Baseline commit:** `PENDING_BASELINE_COMMIT`
+**Baseline commit:** `262bfd3784ed55603ade6d0cfc072080fa291f8f`
 
 ## Next slice status
 
