@@ -1,0 +1,3 @@
+import {State} from '@/shared/ui/primitives';import {Link} from '@/shared/i18n/navigation';
+const copy={ar:['انتهت الجلسة','انتهت الجلسة أو أُلغيت. سجل الدخول من جديد.','تسجيل الدخول'],fr:['Session expirée','La session a expiré ou a été révoquée. Connectez-vous à nouveau.','Connexion'],en:['Session expired','The session expired or was revoked. Sign in again.','Sign in']};
+export default async function Page({params}:{params:Promise<{locale:string}>}){const {locale}=await params;const c=copy[locale as keyof typeof copy]??copy.ar;return <State title={c[0]}><p>{c[1]}</p><Link className="btn" href="/login">{c[2]}</Link></State>;}

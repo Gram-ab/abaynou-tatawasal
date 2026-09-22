@@ -1,0 +1,12 @@
+import 'server-only';
+import {publicDatabase} from '@/shared/db/public';
+
+export type Locale='ar'|'fr'|'en';
+export async function readSignupLegal(language:Locale){const sql=publicDatabase();const [row]=await sql`select * from app.read_signup_legal(${language})`;return row??null;}
+export async function provisionCitizen(input:{authUserId:string;fullName:string;phone:string|null;language:Locale;termsVersionId:string;privacyVersionId:string}){const sql=publicDatabase();const [row]=await sql`select * from app.provision_citizen(${input.authUserId},${input.fullName},${input.phone},${input.language},${input.termsVersionId},${input.privacyVersionId})`;return row??null;}
+export async function provisioningState(authUserId:string){const sql=publicDatabase();const [row]=await sql`select * from app.read_provisioning_state(${authUserId})`;return row??null;}
+export async function createApplicationSession(authUserId:string,providerSessionId:string,digest:Buffer){const sql=publicDatabase();const [row]=await sql`select * from app.create_citizen_session(${authUserId},${providerSessionId},${digest})`;return row??null;}
+export async function resolveApplicationSession(authUserId:string,providerSessionId:string,digest:Buffer,meaningful:boolean){const sql=publicDatabase();const [row]=await sql`select * from app.resolve_citizen_session(${authUserId},${providerSessionId},${digest},${meaningful})`;return row??null;}
+export async function updateCitizenProfile(input:{authUserId:string;providerSessionId:string;digest:Buffer;revision:number;fullName:string;phone:string|null;language:Locale}){const sql=publicDatabase();const [row]=await sql`select * from app.update_citizen_profile(${input.authUserId},${input.providerSessionId},${input.digest},${input.revision},${input.fullName},${input.phone},${input.language})`;return row??null;}
+export async function revokeCurrentSession(authUserId:string,providerSessionId:string,digest:Buffer){const sql=publicDatabase();const [row]=await sql`select app.revoke_current_citizen_session(${authUserId},${providerSessionId},${digest}) result`;return Boolean(row?.result);}
+export async function secureCitizenSessions(input:{authUserId:string;reason:'PASSWORD_RESET'|'PASSWORD_CHANGE'|'EMAIL_CHANGE'|'SECURITY_ACTION';keepProviderSessionId:string|null;currentDigest:Buffer|null;newDigest:Buffer|null}){const sql=publicDatabase();const [row]=await sql`select app.secure_citizen_sessions(${input.authUserId},${input.reason},${input.keepProviderSessionId},${input.currentDigest},${input.newDigest}) epoch`;return Number(row?.epoch);}

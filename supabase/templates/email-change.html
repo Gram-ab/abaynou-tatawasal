@@ -1,0 +1,3 @@
+{{ if eq .Data.language "ar" }}<h2 dir="rtl">تأكيد تغيير البريد الإلكتروني</h2><p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email_change">متابعة التأكيد</a></p>
+{{ else if eq .Data.language "fr" }}<h2>Confirmer le changement de courriel</h2><p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email_change">Continuer</a></p>
+{{ else }}<h2>Confirm your email change</h2><p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email_change">Continue confirmation</a></p>{{ end }}

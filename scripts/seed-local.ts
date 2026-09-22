@@ -1,6 +1,8 @@
 import postgres from 'postgres';
 import {randomBytes} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {writeFileSync,existsSync,readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
 import {isDeepStrictEqual} from 'node:util';
 import {localDatabaseUrl} from './local-target';
 import {developmentPages,developmentSettings} from '../fixtures/public-content';
@@ -44,7 +46,9 @@ async function main() {
    // Password is generated hex, never user input; PostgreSQL does not parameterize ALTER ROLE.
    await sql.unsafe(`alter role app_web password '${password}'`);
    const runtime=new URL(url);runtime.username='app_web';runtime.password=password;
-   writeFileSync('.env.local',`APP_ENV=local\nDATABASE_URL=${runtime.href}\n`,{mode:0o600});
+   const status=JSON.parse(execFileSync(process.execPath,[resolve('node_modules/supabase/dist/supabase.js'),'status','-o','json'],{encoding:'utf8'}));
+   const cookieSecret=prior.match(/^AUTH_COOKIE_SECRET=(.+)$/m)?.[1]??randomBytes(32).toString('base64url');
+   writeFileSync('.env.local',`APP_ENV=local\nAPP_ORIGIN=http://127.0.0.1:3000\nDATABASE_URL=${runtime.href}\nSUPABASE_URL=${status.API_URL}\nSUPABASE_PUBLISHABLE_KEY=${status.ANON_KEY}\nAUTH_COOKIE_SECRET=${cookieSecret}\n`,{mode:0o600});
   }
   console.log(`Development fixtures ready: ${publications} new publications; settings changed: ${settingsChanged}. Runtime credential stored only in ignored .env.local.`);
  } finally {await sql.end();}

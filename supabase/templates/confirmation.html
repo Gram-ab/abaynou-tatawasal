@@ -1,0 +1,7 @@
+{{ if eq .Data.language "ar" }}
+<h2 dir="rtl">تأكيد حساب أباينو تتواصل</h2><p dir="rtl">اضغط على الزر ثم أكّد العملية في الموقع.</p><p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=signup">تأكيد الحساب</a></p>
+{{ else if eq .Data.language "fr" }}
+<h2>Confirmer votre compte Abaynou Tatawasal</h2><p>Ouvrez la page puis confirmez l’action sur le site.</p><p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=signup">Confirmer le compte</a></p>
+{{ else }}
+<h2>Confirm your Abaynou Tatawasal account</h2><p>Open the page, then explicitly confirm the action on the site.</p><p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=signup">Confirm account</a></p>
+{{ end }}

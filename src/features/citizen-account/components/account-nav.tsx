@@ -1,0 +1,3 @@
+import {getLocale} from 'next-intl/server';import {Link} from '@/shared/i18n/navigation';
+const copy={ar:['المعلومات الشخصية','كلمة المرور','البريد الإلكتروني','اللغة'],fr:['Informations personnelles','Mot de passe','Adresse courriel','Langue'],en:['Personal information','Password','Email address','Language']};
+export async function AccountNav(){const locale=await getLocale() as keyof typeof copy,c=copy[locale];return <nav className="account-nav" aria-label={c[0]}><Link href="/citizen/account">{c[0]}</Link><Link href="/citizen/account/password">{c[1]}</Link><Link href="/citizen/account/email">{c[2]}</Link></nav>}

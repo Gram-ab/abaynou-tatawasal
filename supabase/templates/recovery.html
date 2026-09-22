@@ -1,0 +1,3 @@
+{{ if eq .Data.language "ar" }}<h2 dir="rtl">استعادة كلمة المرور</h2><p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=recovery">متابعة الاستعادة</a></p>
+{{ else if eq .Data.language "fr" }}<h2>Réinitialiser votre mot de passe</h2><p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=recovery">Continuer</a></p>
+{{ else }}<h2>Reset your password</h2><p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=recovery">Continue recovery</a></p>{{ end }}

@@ -1,0 +1,3 @@
+import {State} from '@/shared/ui/primitives';
+const copy={ar:['الحساب غير متاح','تم إيقاف الوصول إلى هذا الحساب. تواصل مع الجماعة إذا كنت تعتقد أن ذلك حدث بالخطأ.'],fr:['Compte indisponible','L’accès à ce compte est désactivé. Contactez la Commune si vous pensez qu’il s’agit d’une erreur.'],en:['Account unavailable','Access to this account is disabled. Contact the Commune if you believe this is an error.']};
+export default async function Page({params}:{params:Promise<{locale:string}>}){const {locale}=await params;const c=copy[locale as keyof typeof copy]??copy.ar;return <State title={c[0]}><p>{c[1]}</p></State>;}

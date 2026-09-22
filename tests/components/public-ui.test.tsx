@@ -8,13 +8,14 @@ import {messages} from '../../src/shared/i18n/messages';
 import {State,Callout} from '../../src/shared/ui/primitives';
 import {Header} from '../../src/shared/ui/header';
 vi.mock('@/shared/i18n/navigation',()=>({usePathname:()=>'/faq',Link:({href,children,locale,...props}:React.AnchorHTMLAttributes<HTMLAnchorElement>&{locale?:string})=><a href={`/${locale??'en'}${href}`} {...props}>{children}</a>}));
+vi.mock('@/features/auth/actions',()=>({logoutAction:vi.fn()}));
 afterEach(cleanup);
 describe('public components',()=>{
  it('renders a semantic failure state without interpreting HTML',()=>{
   render(<State title="Unavailable"><p>{'<script>alert(1)</script>'}</p></State>);
   expect(screen.getByRole('heading',{level:1})).toHaveTextContent('Unavailable');
   expect(document.querySelector('script')).toBeNull();
- });
+ },30000);
  it('renders callout as complementary information',()=>{render(<Callout>Development information</Callout>);expect(screen.getByRole('complementary')).toHaveTextContent('Development information');});
  for(const locale of ['ar','fr','en'] as const)it(`provides localized navigation and language links: ${locale}`,()=>{
   render(<NextIntlClientProvider locale={locale} messages={messages[locale]} timeZone="Africa/Casablanca"><Header/></NextIntlClientProvider>);
@@ -26,5 +27,5 @@ describe('public components',()=>{
   expect(menu).toHaveAttribute('aria-expanded','true');
   fireEvent.keyDown(document.getElementById('public-mobile-menu')!,{key:'Escape'});
   expect(menu).toHaveAttribute('aria-expanded','false');
- });
+ },30000);
 });

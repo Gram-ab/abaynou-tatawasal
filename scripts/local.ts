@@ -22,4 +22,4 @@ if(action==='status'){
 }
 if(action==='reset'){localDatabaseUrl();run(cli,['db','reset','--local']);run(tsx,['scripts/seed-local.ts','--runtime-credential']);}
 if(action==='seed'){localDatabaseUrl();run(tsx,['scripts/seed-local.ts']);}
-if(action==='verify'){localDatabaseUrl();run(tsx,['tests/database/foundation.ts']);run(tsx,['tests/database/public-boundary.ts']);}
+if(action==='verify'){localDatabaseUrl();run(tsx,['tests/database/foundation.ts']);run(tsx,['tests/database/public-boundary.ts']);run(tsx,['tests/database/citizen-boundary.ts']);}

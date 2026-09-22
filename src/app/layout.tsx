@@ -6,8 +6,9 @@ import '@fontsource/ibm-plex-sans-arabic/600.css';
 import '@fontsource/ibm-plex-sans-arabic/700.css';
 import '../styles/globals.css';
 import '../styles/public-shell.css';
+import '../styles/citizen-shell.css';
 
 export default async function RootLayout({children}: {children: ReactNode}) {
   const locale = await getLocale();
-  return <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}><body>{children}</body></html>;
+  return <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}><body suppressHydrationWarning>{children}</body></html>;
 }

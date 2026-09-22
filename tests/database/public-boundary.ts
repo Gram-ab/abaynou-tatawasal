@@ -11,7 +11,7 @@ async function main(){
  const check=(v:unknown,label:string)=>{assert.ok(v,label);checks++;console.log(`PASS ${label}`);};
  const reject=async(fn:()=>Promise<unknown>,code:string,label:string)=>{await assert.rejects(fn,e=>(e as {code:string}).code===code,label);checks++;console.log(`PASS ${label}`);};
  try{
-  check((await sql`select count(*)::int n from information_schema.tables where table_schema='app' and table_type='BASE TABLE'`)[0].n===7,'exactly seven application entities');
+  check((await sql`select count(*)::int n from information_schema.tables where table_schema='app' and table_type='BASE TABLE'`)[0].n===9,'exactly nine DEV-01 and DEV-02 application entities');
   check((await sql`select count(*)::int n from app.public_pages`)[0].n===9,'exactly nine page identities');
   check((await sql`select count(*)::int n from app.application_profiles`)[0].n===0,'no provisioned profiles');
   for(const key of Object.keys(developmentPages)) for(const locale of ['ar','fr','en']){

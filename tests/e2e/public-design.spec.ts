@@ -38,10 +38,10 @@ test('mobile menu, complete language direction and keyboard focus',async({page})
  const q=page.locator('.faq summary').nth(1);await q.focus();expect(await q.evaluate(e=>getComputedStyle(e).outlineWidth)).toBe('3px');await page.keyboard.press('Enter');await expect(page.locator('.faq details').nth(1)).toHaveAttribute('open','');
  await page.locator('.hamb').click();await page.locator('.mobile-nav a').first().focus();await page.keyboard.press('Escape');await expect(page.locator('.hamb')).toBeFocused();await expect(page.locator('.hamb')).toHaveAttribute('aria-expanded','false');
 });
-for(const mode of ['login','register','forgot-password'])test(`authentication preview ${mode} accessibility and honest outcome`,async({page})=>{
+for(const mode of ['login','register','forgot-password'])test(`authentication ${mode} fields and accessibility`,async({page})=>{
  await page.goto(`/fr/${mode}`);await expect(page.locator('input[type=email]')).toHaveCount(1);await expect(page.locator('input[type=file]')).toHaveCount(0);await page.locator('input[type=email]').fill('preview@example.invalid');
- if(mode==='register'){await page.locator('input[name=name]').fill('Test');await expect(page.locator('input[type=tel]')).not.toHaveAttribute('required','');await page.locator('input[type=checkbox]').check();}
- if(mode!=='forgot-password'){await page.locator('input[name=password]').fill('preview-only-123');await page.locator('.password button').click();await expect(page.locator('input[name=password]')).toHaveAttribute('type','text');}
- let mutations=0;page.on('request',r=>{if(r.method()==='POST')mutations++;});await page.locator('button[type=submit]').click();await expect(page.locator('#auth-notice')).toContainText('Aucune information');expect(mutations).toBe(0);
+ if(mode==='register'){await page.locator('input[name=fullName]').fill('Test Citizen');await expect(page.locator('input[type=tel]')).not.toHaveAttribute('required','');await page.locator('input[type=checkbox]').check();}
+ if(mode!=='forgot-password'){await page.locator('input[name=password]').fill('preview-only-passphrase');await page.locator('.password button').click();await expect(page.locator('input[name=password]')).toHaveAttribute('type','text');}
+ await expect(page.locator('button[type=submit]')).toBeEnabled();
  expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
 });

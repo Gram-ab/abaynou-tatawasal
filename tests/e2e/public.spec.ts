@@ -21,7 +21,7 @@ test('locale switching preserves page and root honors saved locale',async({page,
 });
 test('unknown routes and unavailable CTA are usable',async({page})=>{
  const response=await page.goto('/en/unknown-page');expect(response?.status()).toBe(404);await expect(page.getByRole('heading',{name:'Page not found'})).toBeVisible();
- await page.goto('/en');await page.getByRole('link',{name:'Start a complaint'}).click();await expect(page.getByRole('heading',{name:'Create a citizen account'})).toBeVisible();await expect(page.locator('#auth-notice')).toContainText('not yet enabled');
+ await page.goto('/en');await page.getByRole('link',{name:'Start a complaint'}).click();await expect(page.getByRole('heading',{name:'Create a citizen account'})).toBeVisible();
 });
 for(const width of [375,768,1440])for(const locale of ['ar','fr','en'])test(`responsive and accessibility ${locale} ${width}`,async({page})=>{
  await page.setViewportSize({width,height:900});await page.goto(`/${locale}`);
