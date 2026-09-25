@@ -2,6 +2,12 @@ import 'server-only';
 import {publicDatabase} from '@/shared/db/public';
 
 export type Locale='ar'|'fr'|'en';
+export async function applicationIdentity(auth:string){const sql=publicDatabase();const [row]=await sql`select * from app.read_application_identity(${auth})`;return row??null;}
+export async function resolveUserSession(auth:string,provider:string,digest:Buffer,activity:boolean){const sql=publicDatabase();const [row]=await sql`select * from app.resolve_application_session(${auth},${provider},${digest},${activity})`;return row??null;}
+export async function createStaffSession(auth:string,provider:string,digest:Buffer){const sql=publicDatabase();const [row]=await sql`select * from app.create_application_session(${auth},${provider},${digest},'COMMUNE')`;return row??null;}
+export async function revokeUserSession(auth:string,provider:string,digest:Buffer){const sql=publicDatabase();await sql`select app.revoke_application_session(${auth},${provider},${digest})`;}
+export async function secureStaffSessions(auth:string,reason:'PASSWORD_RESET'|'PASSWORD_CHANGE',keep:string|null=null,current:Buffer|null=null,fresh:Buffer|null=null){const sql=publicDatabase();await sql`select app.secure_application_sessions(${auth},${reason},${keep},${current},${fresh},'COMMUNE')`;}
+export async function updateStaffLanguage(auth:string,provider:string,digest:Buffer,revision:number,language:Locale){const sql=publicDatabase();await sql`select app.update_staff_language(${auth},${provider},${digest},${revision},${language})`;}
 export async function readSignupLegal(language:Locale){const sql=publicDatabase();const [row]=await sql`select * from app.read_signup_legal(${language})`;return row??null;}
 export async function provisionCitizen(input:{authUserId:string;fullName:string;phone:string|null;language:Locale;termsVersionId:string;privacyVersionId:string}){const sql=publicDatabase();const [row]=await sql`select * from app.provision_citizen(${input.authUserId},${input.fullName},${input.phone},${input.language},${input.termsVersionId},${input.privacyVersionId})`;return row??null;}
 export async function provisioningState(authUserId:string){const sql=publicDatabase();const [row]=await sql`select * from app.read_provisioning_state(${authUserId})`;return row??null;}

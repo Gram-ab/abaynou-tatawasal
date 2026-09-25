@@ -1,0 +1,11 @@
+import {disposablePassword} from '../support/disposable-password';
+import {beforeEach,it,expect,vi} from 'vitest';
+const m=vi.hoisted(()=>({exists:vi.fn(),read:vi.fn(),exec:vi.fn()}));
+vi.mock('node:fs',()=>({existsSync:m.exists,readFileSync:m.read}));vi.mock('node:child_process',()=>({execFileSync:m.exec}));
+import {localDatabaseUrl} from '../../scripts/local-target';
+beforeEach(()=>{vi.resetAllMocks();m.exists.mockReturnValue(false);m.read.mockReturnValue('project_id = "Abaynou_Tatawasal"\n[api]\nport = 54321\n[db]\nport = 54322');m.exec.mockReturnValue(JSON.stringify({DB_URL:`postgresql://local:${disposablePassword()}@127.0.0.1:54322/postgres`,API_URL:'http://127.0.0.1:54321'}));});
+it('refuses linked projects before invoking the CLI',()=>{m.exists.mockReturnValue(true);expect(localDatabaseUrl).toThrow('linked');expect(m.exec).not.toHaveBeenCalled();});
+it('refuses an unexpected project identity',()=>{m.read.mockReturnValue('project_id = "other"');expect(localDatabaseUrl).toThrow('unexpected');});
+it('accepts only the configured local database',()=>{expect(localDatabaseUrl().includes('127.0.0.1:54322/postgres')).toBe(true);});
+for(const target of [`postgresql://local:${disposablePassword()}@remote.invalid:54322/postgres`,`postgresql://local:${disposablePassword()}@127.0.0.1:5432/postgres`,`postgresql://local:${disposablePassword()}@127.0.0.1:54322/production`])it(`refuses mismatched database target ${target.split('@')[1]}`,()=>{m.exec.mockReturnValue(JSON.stringify({DB_URL:target,API_URL:'http://127.0.0.1:54321'}));expect(localDatabaseUrl).toThrow('target');});
+it('refuses a hosted Auth endpoint',()=>{m.exec.mockReturnValue(JSON.stringify({DB_URL:`postgresql://local:${disposablePassword()}@127.0.0.1:54322/postgres`,API_URL:'https://example.supabase.co'}));expect(localDatabaseUrl).toThrow('target');});

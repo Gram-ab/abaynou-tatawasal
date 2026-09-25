@@ -2,7 +2,7 @@ export const messages = {
  en: {
   brand:'Abaynou Tatawasal', tagline:'A closer connection with your Commune',
   nav:{HOME:'Home',HOW_IT_WORKS:'How it works',SERVICE_SCOPE:'Service scope',FAQ:'FAQ',CONTACT:'Contact',USER_GUIDE:'User guide',PRIVACY:'Privacy',ACCESSIBILITY:'Accessibility',TERMS:'Terms'},
-  skip:'Skip to main content', menu:'Menu', navigation:'Main navigation', languages:'Language', footer:'Useful information',
+  skip:'Skip to main content', menu:'Menu', navigation:'Main navigation', languages:'Language', footer:'Useful information',communeSpace:'Commune space',
   demo:'Development preview — content and contact details are not officially approved.',
   signIn:'Sign in',signOut:'Sign out',createAccount:'Create account',submit:'Submit a complaint',learn:'How it works',
   unavailableTitle:'This feature is not available yet',unavailable:'Complaint submission is planned for a later stage. Your account remains available.',
@@ -16,7 +16,7 @@ export const messages = {
  fr: {
   brand:'Abaynou Tatawasal',tagline:'Un lien plus proche avec votre Commune',
   nav:{HOME:'Accueil',HOW_IT_WORKS:'Comment ça marche',SERVICE_SCOPE:'Que signaler ?',FAQ:'FAQ',CONTACT:'Contact',USER_GUIDE:'Guide d’utilisation',PRIVACY:'Confidentialité',ACCESSIBILITY:'Accessibilité',TERMS:'Conditions'},
-  skip:'Aller au contenu principal',menu:'Menu',navigation:'Navigation principale',languages:'Langue',footer:'Informations utiles',
+  skip:'Aller au contenu principal',menu:'Menu',navigation:'Navigation principale',languages:'Langue',footer:'Informations utiles',communeSpace:'Espace Commune',
   demo:'Aperçu de développement — contenus et coordonnées non officiellement approuvés.',
   signIn:'Connexion',signOut:'Déconnexion',createAccount:'Créer un compte',submit:'Déposer une réclamation',learn:'Comment ça marche',
   unavailableTitle:'Cette fonction n’est pas encore disponible',unavailable:'Le dépôt de réclamations est prévu ultérieurement. Votre compte reste disponible.',
@@ -30,7 +30,7 @@ export const messages = {
  ar: {
   brand:'أباينو تتواصل',tagline:'الخدمة الرقمية لجماعة أباينو',
   nav:{HOME:'الرئيسية',HOW_IT_WORKS:'كيف تعمل؟',SERVICE_SCOPE:'ما الذي يمكن الإبلاغ عنه؟',FAQ:'الأسئلة الشائعة',CONTACT:'اتصل بنا',USER_GUIDE:'دليل الاستعمال',PRIVACY:'الخصوصية',ACCESSIBILITY:'إمكانية الولوج',TERMS:'شروط الاستخدام'},
-  skip:'انتقل إلى المحتوى الرئيسي',menu:'القائمة',navigation:'التنقل الرئيسي',languages:'اللغة',footer:'معلومات مفيدة',
+  skip:'انتقل إلى المحتوى الرئيسي',menu:'القائمة',navigation:'التنقل الرئيسي',languages:'اللغة',footer:'معلومات مفيدة',communeSpace:'فضاء الجماعة',
   demo:'نسخة تطوير تجريبية — المحتوى وبيانات الاتصال غير معتمدة رسميا.',
   signIn:'تسجيل الدخول',signOut:'تسجيل الخروج',createAccount:'إنشاء حساب',submit:'تقديم شكاية',learn:'كيف تعمل المنصة؟',
   unavailableTitle:'هذه الوظيفة غير متاحة بعد',unavailable:'تقديم الشكايات مقرر في مرحلة لاحقة. يظل حسابك متاحاً.',

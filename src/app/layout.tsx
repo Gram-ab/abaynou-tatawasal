@@ -7,6 +7,7 @@ import '@fontsource/ibm-plex-sans-arabic/700.css';
 import '../styles/globals.css';
 import '../styles/public-shell.css';
 import '../styles/citizen-shell.css';
+import '../styles/commune-shell.css';
 
 export default async function RootLayout({children}: {children: ReactNode}) {
   const locale = await getLocale();

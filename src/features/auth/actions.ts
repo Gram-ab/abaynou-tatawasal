@@ -5,7 +5,8 @@ import type {EmailOtpType} from '@supabase/supabase-js';
 import {appOrigin,isolatedProviderClient,providerClient,verifiedProviderIdentity} from '@/server/auth/provider';
 import {openData,openIntent,sealData} from '@/server/auth/sealed-intent';
 import {clearSessionSecret,newSessionSecret,writeSessionSecret} from '@/server/sessions/cookie';
-import {createApplicationSession,provisionCitizen,provisioningState,revokeCurrentSession,secureCitizenSessions,updateCitizenProfile} from '@/server/identity/repository';
+import {applicationIdentity,createApplicationSession,provisionCitizen,provisioningState,revokeCurrentSession,secureCitizenSessions,updateCitizenProfile} from '@/server/identity/repository';
+import {redirectAuthenticatedUser} from '@/server/auth/application-user';
 import {currentCitizen} from '@/server/auth/current-citizen';
 import {clearPendingSignup,readPendingSignup,storePendingSignup} from '@/server/auth/pending-signup';
 import {completeRegistrationSchema,emailChangeSchema,loginSchema,passwordChangeSchema,profileSchema,recoverySchema,resetSchema,safeReturnTo,signupSchema,normalizePhone,type AuthState} from './model';
@@ -16,6 +17,7 @@ const success=(code:string):AuthState=>({status:'success',code});
 
 export async function signupAction(_:AuthState,form:FormData):Promise<AuthState>{
  const parsed=signupSchema.safeParse(Object.fromEntries(form));if(!parsed.success)return fail(parsed.error.issues[0]?.message??'validation');
+ await redirectAuthenticatedUser(parsed.data.locale);
  let phone:string|null;try{phone=normalizePhone(parsed.data.phone);}catch{return fail('phoneInvalid');}
  const provider=isolatedProviderClient();const {data,error}=await provider.auth.signUp({email:parsed.data.email.toLowerCase(),password:parsed.data.password,options:{emailRedirectTo:`${appOrigin()}/${parsed.data.locale}/auth/confirm`,data:{language:parsed.data.locale}}});
  if(!error&&data.user&&data.user.identities?.length){
@@ -27,10 +29,13 @@ export async function signupAction(_:AuthState,form:FormData):Promise<AuthState>
 
 export async function loginAction(_:AuthState,form:FormData):Promise<AuthState>{
  const parsed=loginSchema.safeParse(Object.fromEntries(form));if(!parsed.success)return fail('validation');
+ await redirectAuthenticatedUser(parsed.data.locale);
  const client=await providerClient();const {error}=await client.auth.signInWithPassword({email:parsed.data.email.toLowerCase(),password:parsed.data.password});
  if(error)return fail('invalidCredentials');
  const identity=await verifiedProviderIdentity(client);if(!identity){await client.auth.signOut({scope:'local'});return fail('invalidCredentials');}
  const state=await provisioningState(identity.authUserId);
+ const profile=await applicationIdentity(identity.authUserId);
+ if(profile&&profile.role!=='CITIZEN'){await client.auth.signOut({scope:'local'});await clearSessionSecret();return fail('invalidCredentials');}
  if(!state){redirect(`/${parsed.data.locale}/complete-registration`);}
  if(state.state==='DISABLED'){await client.auth.signOut({scope:'local'});redirect(`/${parsed.data.locale}/account-disabled`);}
  if(state.state!=='COMPLETE'){redirect(`/${parsed.data.locale}/complete-registration`);}
@@ -65,10 +70,12 @@ export async function confirmEmailAction(previous:AuthState,form:FormData):Promi
  store.delete(INTENT_COOKIE);if(error)return fail('linkInvalid');
  const identity=await verifiedProviderIdentity(client);if(!identity)return fail('linkInvalid');
  if(intent.type==='recovery'){
+  const profile=await applicationIdentity(identity.authUserId);if(profile?.role!=='CITIZEN'){await client.auth.signOut({scope:'local'});return fail('linkInvalid');}
   store.set(RECOVERY_COOKIE,sealData({authUserId:identity.authUserId,providerSessionId:identity.providerSessionId,expires:Date.now()+15*60_000}),{httpOnly:true,sameSite:'lax',secure:process.env.APP_ENV!=='local',path:'/',maxAge:900});
   redirect(`/${intent.locale}/reset-password`);
  }
  if(intent.type==='email_change'){
+  const profile=await applicationIdentity(identity.authUserId);if(profile?.role!=='CITIZEN'){await client.auth.signOut({scope:'local'});return fail('linkInvalid');}
   await secureCitizenSessions({authUserId:identity.authUserId,reason:'EMAIL_CHANGE',keepProviderSessionId:null,currentDigest:null,newDigest:null});
   await client.auth.signOut({scope:'global'});await clearSessionSecret();redirect(`/${intent.locale}/verify-email?state=email-changed`);
  }
@@ -89,6 +96,7 @@ export async function resetPasswordAction(_:AuthState,form:FormData):Promise<Aut
  const parsed=resetSchema.safeParse(Object.fromEntries(form));if(!parsed.success)return fail(parsed.error.issues[0]?.message??'validation');
  const store=await cookies();const marker=openData<{authUserId:string;providerSessionId:string;expires:number}>(store.get(RECOVERY_COOKIE)?.value);const client=await providerClient();const identity=await verifiedProviderIdentity(client);
  if(!marker||!identity||marker.authUserId!==identity.authUserId||marker.providerSessionId!==identity.providerSessionId)return fail('linkInvalid');
+ const profile=await applicationIdentity(identity.authUserId);if(!profile||profile.role!=='CITIZEN')return fail('linkInvalid');
  await secureCitizenSessions({authUserId:identity.authUserId,reason:'PASSWORD_RESET',keepProviderSessionId:null,currentDigest:null,newDigest:null});
  const {error}=await client.auth.updateUser({password:parsed.data.password});if(error)return fail('operationFailed');
  await client.auth.signOut({scope:'global'});store.delete(RECOVERY_COOKIE);await clearSessionSecret();redirect(`/${parsed.data.locale}/login?state=password-reset`);

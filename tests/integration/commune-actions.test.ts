@@ -1,0 +1,27 @@
+import {disposablePassword} from '../support/disposable-password';
+import {beforeEach,describe,expect,it,vi} from 'vitest';
+const m=vi.hoisted(()=>({profile:vi.fn(),identity:vi.fn(),open:vi.fn(),secure:vi.fn(),update:vi.fn(),signout:vi.fn(),signin:vi.fn(),create:vi.fn(),clear:vi.fn(),cookieGet:vi.fn(),cookieSet:vi.fn(),cookieDelete:vi.fn(),verify:vi.fn()}));
+vi.mock('server-only',()=>({}));
+vi.mock('next/headers',()=>({cookies:async()=>({get:m.cookieGet,set:m.cookieSet,delete:m.cookieDelete})}));
+vi.mock('next/navigation',()=>({redirect:(url:string)=>{throw new Error(`REDIRECT:${url}`);}}));
+vi.mock('@/server/auth/provider',()=>({appOrigin:()=> 'http://127.0.0.1:3000',providerClient:async()=>({auth:{updateUser:m.update,signOut:m.signout,signInWithPassword:m.signin,verifyOtp:m.verify}}),verifiedProviderIdentity:m.identity,isolatedProviderClient:()=>({auth:{signInWithPassword:m.signin,signOut:m.signout}})}));
+vi.mock('@/server/auth/sealed-intent',()=>({openData:m.open,sealData:()=> 'sealed'}));
+vi.mock('@/server/identity/repository',()=>({applicationIdentity:m.profile,secureStaffSessions:m.secure,createStaffSession:m.create,revokeUserSession:vi.fn(),updateStaffLanguage:vi.fn()}));
+vi.mock('@/server/auth/application-user',()=>({currentApplicationUser:vi.fn(),requireCommuneStaff:vi.fn(),redirectAuthenticatedUser:vi.fn()}));
+vi.mock('@/server/sessions/cookie',()=>({clearSessionSecret:m.clear,newSessionSecret:()=>({raw:'opaque',digest:Buffer.alloc(32)}),writeSessionSecret:vi.fn()}));
+import {staffLogin,staffReset,staffConfirmRecovery} from '../../src/features/commune-auth/actions';
+const form=(values:Record<string,string>)=>{const f=new FormData();for(const [k,v]of Object.entries(values))f.set(k,v);return f;};
+const idle={status:'idle'} as const;
+beforeEach(()=>{vi.resetAllMocks();m.identity.mockResolvedValue({authUserId:'auth',providerSessionId:'provider',email:'local@example.test'});m.profile.mockResolvedValue({role:'AGENT',access_status:'ACTIVE'});m.open.mockReturnValue({authUserId:'auth',providerSessionId:'provider',audience:'COMMUNE',expires:Date.now()+10000});m.update.mockResolvedValue({error:null});m.signin.mockResolvedValue({error:null});m.verify.mockResolvedValue({error:null});});
+describe('staff credential mutation authorization',()=>{
+ const reset=()=>{const password=disposablePassword();return staffReset(idle,form({locale:'en',password,confirmation:password}));};
+ it('rejects missing recovery proof before provider mutation',async()=>{m.open.mockReturnValue(null);expect((await reset()).status).toBe('error');expect(m.update.mock.calls.length).toBe(0);});
+ it('rejects proof from another provider session',async()=>{m.open.mockReturnValue({authUserId:'auth',providerSessionId:'other',audience:'COMMUNE'});expect((await reset()).status).toBe('error');expect(m.update.mock.calls.length).toBe(0);});
+ it('rejects Citizen before staff password mutation',async()=>{m.profile.mockResolvedValue({role:'CITIZEN',access_status:'ACTIVE'});expect((await reset()).status).toBe('error');expect(m.update.mock.calls.length).toBe(0);expect(m.secure.mock.calls.length).toBe(0);});
+ it('rejects disabled staff before mutation',async()=>{m.profile.mockResolvedValue({role:'ADMIN',access_status:'DISABLED'});expect((await reset()).status).toBe('error');expect(m.update.mock.calls.length).toBe(0);});
+ it('revokes app sessions before updating provider credentials and requires login',async()=>{await expect(reset()).rejects.toThrow('REDIRECT:/en/commune/login?state=password-reset');expect(m.secure).toHaveBeenCalledWith('auth','PASSWORD_RESET');expect(m.secure.mock.invocationCallOrder[0]).toBeLessThan(m.update.mock.invocationCallOrder[0]);expect(m.signout).toHaveBeenCalledWith({scope:'global'});});
+ it('rejects short staff passwords even with provider authentication',async()=>{expect((await staffLogin(idle,form({locale:'en',email:'local@example.test',password:disposablePassword(10)}))).status).toBe('error');expect(m.create.mock.calls.length).toBe(0);});
+ it('rejects Citizen at Commune login without issuing authority',async()=>{m.profile.mockResolvedValue({role:'CITIZEN',access_status:'ACTIVE'});expect((await staffLogin(idle,form({locale:'en',email:'local@example.test',password:disposablePassword()}))).status).toBe('error');expect(m.create.mock.calls.length).toBe(0);});
+ it('rejects unverified provider identity',async()=>{m.identity.mockResolvedValue(null);expect((await staffLogin(idle,form({locale:'en',email:'local@example.test',password:disposablePassword()}))).status).toBe('error');expect(m.create.mock.calls.length).toBe(0);});
+ it('does not authorize Citizen recovery in the staff flow',async()=>{m.open.mockReturnValue({tokenHash:'opaque',audience:'COMMUNE',expires:Date.now()+10000});m.profile.mockResolvedValue({role:'CITIZEN',access_status:'ACTIVE'});expect((await staffConfirmRecovery(idle,form({locale:'en'}))).status).toBe('error');expect(m.cookieSet.mock.calls.length).toBe(0);});
+});

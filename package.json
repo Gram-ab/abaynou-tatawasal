@@ -18,7 +18,8 @@
     "db:status": "tsx scripts/local.ts status",
     "db:reset": "tsx scripts/local.ts reset",
     "db:seed": "tsx scripts/local.ts seed",
-    "db:verify": "tsx scripts/local.ts verify"
+    "db:verify": "tsx scripts/local.ts verify",
+    "staff:bootstrap": "tsx scripts/bootstrap-local-staff.ts"
   },
   "dependencies": {
     "@fontsource/ibm-plex-sans-arabic": "5.3.0",
