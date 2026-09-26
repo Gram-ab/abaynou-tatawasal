@@ -7,6 +7,7 @@ import {NextIntlClientProvider} from 'next-intl';
 import {messages} from '../../src/shared/i18n/messages';
 import {State,Callout} from '../../src/shared/ui/primitives';
 import {Header} from '../../src/shared/ui/header';
+vi.mock('next/navigation',()=>({useRouter:()=>({push:vi.fn()})}));
 vi.mock('@/shared/i18n/navigation',()=>({usePathname:()=>'/faq',Link:({href,children,locale,...props}:React.AnchorHTMLAttributes<HTMLAnchorElement>&{locale?:string})=><a href={`/${locale??'en'}${href}`} {...props}>{children}</a>}));
 vi.mock('@/features/commune-auth/actions',()=>({staffLogout:vi.fn()}));
 vi.mock('@/features/auth/actions',()=>({logoutAction:vi.fn()}));

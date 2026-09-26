@@ -1,0 +1,22 @@
+import {beforeEach,describe,expect,it,vi} from 'vitest';
+import {randomBytes,randomUUID} from 'node:crypto';
+const m=vi.hoisted(()=>({actor:vi.fn(),submit:vi.fn(),recover:vi.fn(),catalogues:vi.fn()}));
+vi.mock('server-only',()=>({}));
+vi.mock('@/server/auth/application-user',()=>({currentApplicationUser:m.actor}));
+vi.mock('@/server/complaints/repository',()=>({submitComplaint:m.submit,recoverComplaint:m.recover}));
+vi.mock('@/server/catalogues/repository',()=>({readCatalogues:m.catalogues}));
+import {submitComplaintAction,recoverComplaintAction,reloadComplaintCatalogues} from '../../src/features/complaints/actions';
+import {complaintFingerprint} from '../../src/server/complaints/fingerprint';
+const payload=()=>({categoryId:randomUUID(),locationId:randomUUID(),subject:' Original subject ',description:' A sufficient original description. ',locationClarification:'',commandKey:randomUUID(),locale:'en',confirmed:true});
+beforeEach(()=>{vi.resetAllMocks();m.actor.mockResolvedValue({state:'VALID',role:'CITIZEN'});});
+describe('complaint action boundaries',()=>{
+ for(const role of ['AGENT','ADMIN'])it(`denies ${role} without executing submission`,async()=>{m.actor.mockResolvedValue({state:'VALID',role});expect(await submitComplaintAction(payload())).toEqual({error:'session'});expect(m.submit).not.toHaveBeenCalled();});
+ it('rejects browser authority fields',async()=>{expect(await submitComplaintAction({...payload(),citizen_id:randomUUID()})).toEqual({error:'validation'});expect(m.submit).not.toHaveBeenCalled();});
+ for(const [code,error] of [['P0401','category'],['P0402','location'],['P0409','conflict'],['P0429','throttled'],['42501','session'],['23514','validation'],['08006','uncertain']])it(`maps ${code} without leaking database text`,async()=>{m.submit.mockRejectedValue({code,message:'Private database detail'});expect(await submitComplaintAction(payload())).toEqual({error});});
+ it('returns committed result for persisted readback',async()=>{m.submit.mockResolvedValue({reference:'AB-2345-6789-ABCD',replayed:false});expect(await submitComplaintAction(payload())).toEqual({reference:'AB-2345-6789-ABCD',replayed:false});});
+ it('does not expose errors through logs',async()=>{const spy=vi.spyOn(console,'error').mockImplementation(()=>{});try{m.submit.mockRejectedValue(new Error('Private complaint text'));await submitComplaintAction(payload());expect(spy).not.toHaveBeenCalled();}finally{spy.mockRestore();}});
+ it('rejects malformed recovery keys before lookup',async()=>{expect(await recoverComplaintAction('invalid')).toEqual({error:'validation'});expect(m.recover).not.toHaveBeenCalled();});
+ it('reports unavailable catalogue safely',async()=>{m.catalogues.mockRejectedValue(new Error('Unavailable'));expect(await reloadComplaintCatalogues()).toBeNull();});
+ it('uses stable keyed canonical fingerprints and preserves meaningful differences',()=>{vi.stubEnv('COMMAND_FINGERPRINT_SECRET',randomBytes(32).toString('hex'));try{const value=payload(),base=complaintFingerprint(value);expect(base).toHaveLength(32);expect(complaintFingerprint({...value,locationClarification:'  '})).toEqual(base);expect(complaintFingerprint({...value,subject:value.subject.trim()})).not.toEqual(base);vi.stubEnv('COMMAND_FINGERPRINT_SECRET',randomBytes(32).toString('hex'));expect(complaintFingerprint(value)).not.toEqual(base);}finally{vi.unstubAllEnvs();}});
+ it('fails closed without fingerprint configuration',()=>{vi.stubEnv('COMMAND_FINGERPRINT_SECRET','');try{expect(()=>complaintFingerprint(payload())).toThrow('configuration unavailable');}finally{vi.unstubAllEnvs();}});
+});

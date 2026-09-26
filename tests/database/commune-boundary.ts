@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {randomBytes,randomUUID} from 'node:crypto';
 import postgres from 'postgres';
-import {localDatabaseUrl} from '../../scripts/local-target';
+import {localDatabaseUrl} from './target';
 async function main(){const db=postgres(localDatabaseUrl(),{max:1,onnotice:()=>{}});let passed=0;
  const check=(v:unknown,label:string)=>{assert.ok(v,label);passed++;console.log(`PASS ${label}`);};
  try{await db.begin(async tx=>{

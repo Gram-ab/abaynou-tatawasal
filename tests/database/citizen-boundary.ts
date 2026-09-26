@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import {createHash,randomBytes,randomUUID} from 'node:crypto';
-import {readFileSync} from 'node:fs';
+
 import postgres from 'postgres';
-import {localDatabaseUrl} from '../../scripts/local-target';
+import {localDatabaseUrl,runtimeDatabaseUrl} from './target';
 
 async function main(){
  const admin=postgres(localDatabaseUrl(),{max:1,onnotice:()=>{}});
- const runtimeUrl=readFileSync('.env.local','utf8').match(/^DATABASE_URL=(.+)$/m)?.[1];
+ const runtimeUrl=runtimeDatabaseUrl();
  assert.ok(runtimeUrl,'runtime URL exists');
  const web=postgres(runtimeUrl,{max:1,onnotice:()=>{}});let passed=0;
  const check=(value:unknown,label:string)=>{assert.ok(value,label);passed++;console.log(`PASS ${label}`);};

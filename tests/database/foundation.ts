@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import postgres from 'postgres';
-import {localDatabaseUrl} from '../../scripts/local-target';
+import {localDatabaseUrl} from './target';
 
 async function main() {
  const sql = postgres(localDatabaseUrl(), {max: 1, onnotice: () => {}});

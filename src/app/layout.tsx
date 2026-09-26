@@ -8,8 +8,10 @@ import '../styles/globals.css';
 import '../styles/public-shell.css';
 import '../styles/citizen-shell.css';
 import '../styles/commune-shell.css';
+import '../styles/complaints.css';
+import {ComplaintFlowMemory} from '@/features/complaints/components/flow-memory';
 
 export default async function RootLayout({children}: {children: ReactNode}) {
   const locale = await getLocale();
-  return <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}><body suppressHydrationWarning>{children}</body></html>;
+  return <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}><body suppressHydrationWarning><ComplaintFlowMemory>{children}</ComplaintFlowMemory></body></html>;
 }
