@@ -5,6 +5,7 @@ body:has(.commune-area)>.chikaya,body:has(.commune-area)>.public-footer{display:
 .commune-sidebar .brand b{color:white;font-size:16px}.commune-sidebar .brand img{width:64px}.commune-sidebar .brand{gap:8px}
 
 .commune-backdrop{opacity:1;transition:opacity 200ms ease,display 200ms allow-discrete}
+.commune-counters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:28px 0}.commune-counters article{background:#fff;border:1px solid #dce3dd;border-radius:8px;padding:24px;display:grid;gap:8px}.commune-counters strong{font-size:32px;color:#174f3f}.commune-counters span{color:#65736b}.commune-topbar>.citizen-bell{margin-inline-start:auto}.commune-topbar>.citizen-bell+ a{margin-inline-start:0}
 .commune-backdrop[hidden]{display:none;opacity:0}
 @media(max-width:1100px){
  .commune-sidebar{width:min(290px,calc(100% - 36px));transform:translateX(-100%);transition:transform 200ms ease,display 200ms allow-discrete}
@@ -14,3 +15,4 @@ body:has(.commune-area)>.chikaya,body:has(.commune-area)>.public-footer{display:
 }
 @starting-style{.commune-backdrop:not([hidden]){opacity:0}}
 @media(prefers-reduced-motion:reduce){.commune-sidebar,.commune-backdrop{transition:none}}
+@media(max-width:600px){.commune-counters{grid-template-columns:1fr}.commune-counters article{padding:18px}}

@@ -1,0 +1,4 @@
+'use client';
+import {useRef,useState} from 'react';
+import {ConfirmationDialog} from '@/shared/ui/confirmation-dialog';
+export function ConfirmAction({action,children,title,message,cancel,hidden,danger=true}:{action:(form:FormData)=>void|Promise<void>;children:string;title:string;message:string;cancel:string;hidden:Record<string,string|number>;danger?:boolean}){const form=useRef<HTMLFormElement>(null),[open,setOpen]=useState(false);return <><form ref={form} action={action}>{Object.entries(hidden).map(([name,value])=><input key={name} type="hidden" name={name} value={String(value)}/>)}<button className={`btn${danger?' danger':''}`} type="button" onClick={()=>setOpen(true)}>{children}</button></form><ConfirmationDialog open={open} title={title} message={message} confirmLabel={children} cancelLabel={cancel} danger={danger} onCancel={()=>setOpen(false)} onConfirm={()=>{setOpen(false);requestAnimationFrame(()=>form.current?.requestSubmit());}}/></>;}

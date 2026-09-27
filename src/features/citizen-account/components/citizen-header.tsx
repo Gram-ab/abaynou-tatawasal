@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useId,useRef,useState,type ReactNode} from 'react';
-import {List,X,User,SignOut,CaretDown,Globe,House,Plus,Question} from '@phosphor-icons/react';
+import {List,X,User,SignOut,CaretDown,Globe,House,Plus,Question,ClipboardText} from '@phosphor-icons/react';
 import {useLocale} from 'next-intl';
 import {complaintCopy} from '@/features/complaints/copy';
 import {useMenuDismiss} from '@/shared/ui/use-menu-dismiss';
@@ -9,7 +9,7 @@ import {Link,usePathname} from '@/shared/i18n/navigation';
 import {logoutAction} from '@/features/auth/actions';
 import {NotificationBell} from '@/features/notifications/components/bell';
 import type {NotificationSummary} from '@/features/notifications/model';
-const labels={ar:{space:'فضاء المواطن',account:'حسابي',help:'المساعدة',logout:'تسجيل الخروج',menu:'قائمة المواطن',language:'اللغة'},fr:{space:'Espace citoyen',account:'Mon compte',help:'Aide',logout:'Déconnexion',menu:'Menu citoyen',language:'Langue'},en:{space:'Citizen space',account:'My account',help:'Help',logout:'Sign out',menu:'Citizen menu',language:'Language'}};
+const labels={ar:{space:'فضاء المواطن',complaints:'شكاياتي',account:'حسابي',help:'المساعدة',logout:'تسجيل الخروج',menu:'قائمة المواطن',language:'اللغة'},fr:{space:'Espace citoyen',complaints:'Mes réclamations',account:'Mon compte',help:'Aide',logout:'Déconnexion',menu:'Menu citoyen',language:'Langue'},en:{space:'Citizen space',complaints:'My complaints',account:'My account',help:'Help',logout:'Sign out',menu:'Citizen menu',language:'Language'}};
 function HeaderDisclosure({label,children,className='',accessibleLabel}:{label:ReactNode;children:ReactNode;className?:string;accessibleLabel?:string}){
  const [open,setOpen]=useState(false),root=useRef<HTMLDivElement>(null),trigger=useRef<HTMLButtonElement>(null),id=useId();
  useEffect(()=>{
@@ -28,7 +28,7 @@ function HeaderDisclosure({label,children,className='',accessibleLabel}:{label:R
 export function CitizenHeader({name,notifications={changeRevision:0,lastSequence:0,unreadCount:0}}:{name:string;notifications?:NotificationSummary}){
  const locale=useLocale() as keyof typeof labels,c=labels[locale],pathname=usePathname();
  const [open,setOpen]=useState(false),menuRoot=useMenuDismiss(open,()=>setOpen(false),1100);
- const links=<><Link href="/citizen" aria-current={pathname==='/citizen'?'page':undefined}><House size={19} aria-hidden="true"/>{c.space}</Link><Link href="/citizen/complaints/new" aria-current={pathname==='/citizen/complaints/new'?'page':undefined}><Plus size={19} aria-hidden="true"/>{complaintCopy[locale].new}</Link><Link href="/contact"><Question size={19} aria-hidden="true"/>{c.help}</Link></>;
+ const links=<><Link href="/citizen" aria-current={pathname==='/citizen'?'page':undefined}><House size={19} aria-hidden="true"/>{c.space}</Link><Link href="/citizen/complaints" aria-current={pathname==='/citizen/complaints'||pathname.startsWith('/citizen/complaints/')&&pathname!=='/citizen/complaints/new'?'page':undefined}><ClipboardText size={19} aria-hidden="true"/>{c.complaints}</Link><Link href="/citizen/complaints/new" aria-current={pathname==='/citizen/complaints/new'?'page':undefined}><Plus size={19} aria-hidden="true"/>{complaintCopy[locale].new}</Link><Link href="/contact"><Question size={19} aria-hidden="true"/>{c.help}</Link></>;
  const logout=<form action={logoutAction}><input type="hidden" name="locale" value={locale}/><button className="signout" type="submit"><SignOut size={19} aria-hidden="true"/>{c.logout}</button></form>;
  return <header ref={menuRoot} className="citizen-header"><div className="citizen-head"><Brand/><nav className="citizen-nav" aria-label={c.menu}>{links}</nav><NotificationBell key={notifications.changeRevision} initial={notifications}/><div className="citizen-actions">
   <HeaderDisclosure className="citizen-language" accessibleLabel={c.language} label={<><Globe size={18} aria-hidden="true"/><span>{locale==='ar'?'العربية':locale.toUpperCase()}</span></>}><Languages/></HeaderDisclosure>

@@ -29,6 +29,16 @@ export const referencePattern=/^AB-(?:[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{4}-){2}
 export type Labels=Partial<Record<'ar'|'fr'|'en',string>>&{ar:string};
 export type CatalogueItem={id:string;code:string;labels:Labels};
 export type Catalogues={categories:CatalogueItem[];locations:CatalogueItem[]};
+export const complaintStatuses=['SUBMITTED','UNDER_REVIEW','IN_PROCESSING','RESPONSE_SENT','CLOSED','WITHDRAWN','NOT_ACCEPTED'] as const;
+export type ComplaintStatus=typeof complaintStatuses[number];
+export type ComplaintListItem={reference:string;category_labels:Labels;location_labels:Labels;subject:string;status:ComplaintStatus;submitted_at:Date;updated_at:Date;revision:number;citizen_name?:string};
+export type ComplaintEvent={revision:number;event_type:'SUBMITTED'|'EDITED'|'STATE_CHANGED'|'RESPONSE_ISSUED'|'RESPONSE_CORRECTED';previous_status:ComplaintStatus|null;new_status:ComplaintStatus;occurred_at:Date};
+export const complaintStatusSchema=z.enum(complaintStatuses);
+export const complaintListQuerySchema=z.object({q:z.string().trim().max(150).optional().default(''),status:z.union([complaintStatusSchema,z.literal('')]).optional().default(''),beforeTime:z.string().datetime().optional(),beforeReference:z.string().regex(referencePattern).optional()});
+export const complaintMutationSchema=complaintFieldsSchema.extend({reference:z.string().regex(referencePattern),expectedRevision:z.coerce.number().int().positive(),commandKey:z.string().uuid()}).strict();
+export const complaintTransitionSchema=z.object({reference:z.string().regex(referencePattern),expectedRevision:z.coerce.number().int().positive(),commandKey:z.string().uuid()}).strict();
+export function canCitizenChange(status:ComplaintStatus){return status==='SUBMITTED';}
+export function canStartReview(status:ComplaintStatus){return status==='SUBMITTED';}
 export function catalogueLabel(item:{labels:Labels},locale:'ar'|'fr'|'en'){return {text:item.labels[locale]??item.labels.ar,language:item.labels[locale]?locale:'ar'};}
 export function sortedCatalogue(items:CatalogueItem[],locale:'ar'|'fr'|'en'){
  const collator=new Intl.Collator(locale);

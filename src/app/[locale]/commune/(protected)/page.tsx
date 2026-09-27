@@ -1,7 +1,8 @@
-import {communeCopy as metadataCopy} from '@/features/commune-auth/copy';
 import {requireCommuneStaff} from '@/server/auth/application-user';
-import {communeCopy,type CommuneLocale} from '@/features/commune-auth/copy';
+import {listStaffComplaints,staffComplaintCounts} from '@/server/complaints/repository';
+import {ComplaintList} from '@/features/complaints/components/tracking';
+import {statusLabel,trackingCopy} from '@/features/complaints/tracking-copy';
+import type {ComplaintStatus} from '@/features/complaints/model';
 import {Link} from '@/shared/i18n/navigation';
-export default async function Page({params}:{params:Promise<{locale:CommuneLocale}>}){const {locale}=await params,user=await requireCommuneStaff(locale,true),c=communeCopy[locale];return <section><span className="eyebrow">{c.brand}</span><h1>{c.welcome} {user.fullName}</h1><div className="commune-card"><p>{c.ready}</p><Link className="btn" href="/commune/account">{c.account}</Link><p>{c.future}</p></div></section>;}
-
-export async function generateMetadata({params}:{params:Promise<{locale:keyof typeof metadataCopy}>}){return {title:metadataCopy[(await params).locale].home};}
+const copy={ar:{welcome:'مرحباً',lead:'تابع الشكايات المشتركة وابدأ دراسة الشكايات الجديدة.',recent:'أحدث الشكايات'},fr:{welcome:'Bonjour',lead:'Suivez la file partagée et commencez l’examen des nouvelles réclamations.',recent:'Réclamations récentes'},en:{welcome:'Welcome',lead:'Monitor the shared queue and start reviewing new complaints.',recent:'Recent complaints'}};
+export default async function Page({params}:{params:Promise<{locale:'ar'|'fr'|'en'}>}){const {locale}=await params,user=await requireCommuneStaff(locale,true),[items,counts]=await Promise.all([listStaffComplaints(user,{},5),staffComplaintCounts(user)]),c=copy[locale],t=trackingCopy[locale],shown=['SUBMITTED','UNDER_REVIEW','WITHDRAWN'] as ComplaintStatus[];return <section className="commune-dashboard"><span className="eyebrow">{t.dashboard}</span><h1>{c.welcome} {user.fullName}</h1><p>{c.lead}</p><div className="commune-counters">{shown.map(status=><article key={status}><strong>{counts[status]??0}</strong><span>{statusLabel(locale,status)}</span></article>)}</div><div className="dashboard-recent"><div className="tracking-heading"><h2>{c.recent}</h2><Link href="/commune/complaints">{t.inbox}</Link></div>{items.length?<ComplaintList locale={locale} items={items} staff/>:<p className="tracking-empty">{t.empty}</p>}</div></section>;}

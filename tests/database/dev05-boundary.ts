@@ -1,0 +1,53 @@
+import assert from 'node:assert/strict';
+import {randomBytes,randomUUID} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import postgres from 'postgres';
+import {canonicalCategories,canonicalLocations} from '../../fixtures/canonical-catalogue';
+import {localDatabaseUrl,runtimeDatabaseUrl} from './target';
+export async function verifyDev05(adminUrl=localDatabaseUrl()){
+ const env=readFileSync('.env.local','utf8'),runtime=new URL(env.match(/^DATABASE_URL=(.+)$/m)?.[1]??runtimeDatabaseUrl());runtime.pathname=new URL(adminUrl).pathname;
+ const admin=postgres(adminUrl,{max:4,onnotice:()=>{}}),web=postgres(runtime.href,{max:6,onnotice:()=>{}});let passed=0;
+ const check=(value:unknown,label:string)=>{assert.ok(value,label);passed++;console.log(`PASS ${label}`);};
+ const rejects=async(fn:()=>Promise<unknown>,code:string,label:string)=>{await assert.rejects(fn,error=>(error as {code?:string}).code===code,label);check(true,label);};
+ try{
+  const [legal]=await web`select * from app.read_signup_legal('en')`;
+  const citizen=async(name:string)=>{const auth=randomUUID(),provider=randomUUID(),digest=randomBytes(32);await admin`insert into auth.users(id,email,email_confirmed_at) values(${auth},${`${auth}@example.invalid`},now())`;const [profile]=await web`select * from app.provision_citizen(${auth},${name},${'+212600000000'},'en',${legal.terms_version_id},${legal.privacy_version_id})`;await web`select * from app.create_citizen_session(${auth},${provider},${digest})`;return {auth,provider,digest,profile};};
+  const staff=async(role:'AGENT'|'ADMIN',status='ACTIVE')=>{const auth=randomUUID(),provider=randomUUID(),digest=randomBytes(32),email=`${auth}@example.invalid`;await admin`insert into auth.users(id,email,email_confirmed_at) values(${auth},${email},now())`;const [profile]=await admin`insert into app.application_profiles(auth_user_id,full_name,role,access_status) values(${auth},${role+' DEV05'},${role},${status}) returning *`;if(status==='ACTIVE')await web`select * from app.create_application_session(${auth},${provider},${digest},'COMMUNE')`;return {auth,provider,digest,profile,email};};
+  const owner=await citizen('DEV05 Owner'),other=await citizen('DEV05 Other'),agent=await staff('AGENT'),manager=await staff('ADMIN'),inactive=await staff('AGENT','DISABLED'),activeStaff=Number((await admin`select count(*) n from app.application_profiles where role in ('AGENT','ADMIN') and access_status='ACTIVE'`)[0].n);
+  const submit=()=>web`select * from app.submit_complaint(${owner.auth},${owner.provider},${owner.digest},${randomUUID()},${randomBytes(32)},${canonicalCategories[0].id},${canonicalLocations[0].id},'Shared road issue','A detailed complaint used to verify the DEV-05 shared intake flow.',null,true)`;
+  const [first]=await submit();
+  check((await web`select * from app.list_own_complaints(${owner.auth},${owner.provider},${owner.digest},null,null,null,null,20)`).some(row=>row.reference===first.reference),'Citizen own list includes complaint');
+  check((await web`select * from app.list_own_complaints(${other.auth},${other.provider},${other.digest},null,null,null,null,20)`).every(row=>row.reference!==first.reference),'other Citizen list excludes complaint');
+  check((await web`select * from app.read_own_complaint_history(${owner.auth},${owner.provider},${owner.digest},${first.reference},50)`)[0].event_type==='SUBMITTED','Citizen history projects submission');
+  check((await web`select * from app.list_staff_complaints(${agent.auth},${agent.provider},${agent.digest},'Shared',null,null,null,null,20)`).some(row=>row.reference===first.reference),'Agent shared inbox search finds complaint');
+  check((await web`select * from app.list_staff_complaints(${manager.auth},${manager.provider},${manager.digest},null,'SUBMITTED',${canonicalLocations[0].id},null,null,20)`).some(row=>row.reference===first.reference),'Admin shared inbox filters complaint');
+  const staffPage=await web`select * from app.page_staff_complaints(${agent.auth},${agent.provider},${agent.digest},'Shared',null,null,1,20)`;
+  check(staffPage.some(row=>row.reference===first.reference&&Number(row.total_count)>=1),'staff page projection returns filtered rows and bounded total');
+  const [staffDetail]=await web`select * from app.read_staff_complaint(${agent.auth},${agent.provider},${agent.digest},${first.reference})`;
+  check(staffDetail.citizen_name==='DEV05 Owner'&&staffDetail.citizen_email&&staffDetail.citizen_phone,'staff detail includes authorized contact');
+  check((await admin`select count(*)::int n from app.notifications where complaint_id=(select id from app.complaints where reference=${first.reference}) and type='NEW_COMPLAINT'`)[0].n===activeStaff,'future submission fans out to every active Agent and Admin');
+  check((await admin`select count(*)::int n from app.notifications where recipient_id=${inactive.profile.id}`)[0].n===0,'inactive staff excluded from fanout');
+  const [beforeEdit]=await web`select * from app.read_own_complaint(${owner.auth},${owner.provider},${owner.digest},${first.reference})`,editKey=randomUUID(),editFingerprint=randomBytes(32);
+  const edit=()=>web`select * from app.edit_own_complaint(${owner.auth},${owner.provider},${owner.digest},${first.reference},${beforeEdit.revision},${editKey},${editFingerprint},${canonicalCategories[1].id},${canonicalLocations[1].id},'Edited subject','Edited description with sufficient meaningful content for validation.',null)`;
+  const [edited]=await edit(),[editReplay]=await edit();check(Number(edited.revision)===2&&editReplay.replayed,'Citizen edit is revisioned and idempotent');
+  check((await web`select * from app.read_own_complaint_history(${owner.auth},${owner.provider},${owner.digest},${first.reference},50)`).at(-1)?.event_type==='EDITED','edit creates immutable history');
+  await rejects(()=>web`select * from app.edit_own_complaint(${owner.auth},${owner.provider},${owner.digest},${first.reference},1,${randomUUID()},${randomBytes(32)},${canonicalCategories[1].id},${canonicalLocations[1].id},'Stale edit','A stale edit with enough detail to pass basic validation.',null)`,'P0412','stale edit fails safely');
+  const [withdrawTarget]=await submit(),[withdrawDetail]=await web`select * from app.read_own_complaint(${owner.auth},${owner.provider},${owner.digest},${withdrawTarget.reference})`,withdrawKey=randomUUID(),withdrawFingerprint=randomBytes(32);
+  const withdraw=()=>web`select * from app.withdraw_own_complaint(${owner.auth},${owner.provider},${owner.digest},${withdrawTarget.reference},${withdrawDetail.revision},${withdrawKey},${withdrawFingerprint})`;
+  const [withdrawn]=await withdraw(),[withdrawReplay]=await withdraw();check(Number(withdrawn.revision)===2&&withdrawReplay.replayed,'withdrawal is revisioned and idempotent');
+  check((await admin`select count(*)::int n from app.notifications where complaint_id=(select id from app.complaints where reference=${withdrawTarget.reference}) and type='COMPLAINT_WITHDRAWN'`)[0].n===activeStaff,'withdrawal fans out once to active staff snapshot');
+  await rejects(()=>web`select * from app.withdraw_own_complaint(${owner.auth},${owner.provider},${owner.digest},${withdrawTarget.reference},2,${randomUUID()},${randomBytes(32)})`,'P0412','withdrawn complaint cannot be withdrawn again with a new command');
+  const [reviewTarget]=await submit(),[reviewDetail]=await web`select * from app.read_own_complaint(${owner.auth},${owner.provider},${owner.digest},${reviewTarget.reference})`;
+  const attempts=await Promise.allSettled([[agent,randomUUID(),randomBytes(32)],[manager,randomUUID(),randomBytes(32)]].map(([user,key,fingerprint])=>{const s=user as typeof agent;return web`select * from app.start_complaint_review(${s.auth},${s.provider},${s.digest},${reviewTarget.reference},${reviewDetail.revision},${key as string},${fingerprint as Buffer})`;}));
+  check(attempts.filter(x=>x.status==='fulfilled').length===1&&attempts.filter(x=>x.status==='rejected'&&(x.reason as {code?:string}).code==='P0412').length===1,'concurrent Start Review has exactly one winner');
+  const [reviewed]=await web`select * from app.read_own_complaint(${owner.auth},${owner.provider},${owner.digest},${reviewTarget.reference})`;check(reviewed.status==='UNDER_REVIEW'&&Number(reviewed.revision)===2,'Start Review changes only to UNDER_REVIEW');
+  check((await admin`select count(*)::int n from app.notifications where complaint_id=(select id from app.complaints where reference=${reviewTarget.reference}) and recipient_id=${owner.profile.profile_id} and type='COMPLAINT_UNDER_REVIEW'`)[0].n===1,'Start Review notifies owning Citizen once');
+  await rejects(()=>web`select * from app.withdraw_own_complaint(${owner.auth},${owner.provider},${owner.digest},${reviewTarget.reference},2,${randomUUID()},${randomBytes(32)})`,'P0412','Citizen withdrawal locks after review starts');
+  await rejects(()=>web`select * from app.edit_own_complaint(${owner.auth},${owner.provider},${owner.digest},${reviewTarget.reference},2,${randomUUID()},${randomBytes(32)},${canonicalCategories[0].id},${canonicalLocations[0].id},'Locked edit','This edit is blocked after the complaint enters review.',null)`,'P0412','Citizen editing locks after review starts');
+  const late=await staff('AGENT');check((await admin`select count(*)::int n from app.notifications where recipient_id=${late.profile.id}`)[0].n===0,'staff added later receives no historical notifications');
+  await rejects(()=>web`select * from app.list_staff_complaints(${inactive.auth},${inactive.provider},${inactive.digest},null,null,null,null,null,20)`,'42501','inactive staff cannot access shared inbox');
+  await rejects(()=>web`select * from app.page_staff_complaints(${inactive.auth},${inactive.provider},${inactive.digest},null,null,null,1,20)`,'42501','inactive staff cannot access paged shared inbox');
+  await rejects(()=>web`select * from app.complaints`,'42501','runtime cannot bypass trusted projections');
+  console.log(`DEV-05 database: ${passed} checks passed.`);
+ }finally{await web.end();await admin.end();}
+}

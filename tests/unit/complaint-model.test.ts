@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest';
 import {randomUUID} from 'node:crypto';
-import {canonicalComplaint,catalogueLabel,codePoints,complaintCommandSchema,complaintFieldsSchema,sortedCatalogue} from '../../src/features/complaints/model';
+import {canonicalComplaint,catalogueLabel,codePoints,complaintCommandSchema,complaintFieldsSchema,sortedCatalogue,canCitizenChange,canStartReview,complaintListQuerySchema} from '../../src/features/complaints/model';
 const input=()=>({categoryId:randomUUID(),locationId:randomUUID(),subject:' Original subject ',description:' Original description with sufficient text. ',locationClarification:''});
 describe('complaint validation and preservation',()=>{
  it('counts astral characters as single code points',()=>{expect(codePoints('أ😀e\u0301')).toBe(4);expect(complaintFieldsSchema.safeParse({...input(),subject:'😀'.repeat(150)}).success).toBe(true);expect(complaintFieldsSchema.safeParse({...input(),subject:'😀'.repeat(151)}).success).toBe(false);});
@@ -12,4 +12,6 @@ describe('complaint validation and preservation',()=>{
  it('rejects injected authority and requires explicit confirmation',()=>{const value={...input(),commandKey:randomUUID(),locale:'ar',confirmed:true};expect(complaintCommandSchema.safeParse(value).success).toBe(true);expect(complaintCommandSchema.safeParse({...value,citizen_id:randomUUID()}).success).toBe(false);expect(complaintCommandSchema.safeParse({...value,confirmed:false}).success).toBe(false);});
  it('uses Arabic fallback without invented translations',()=>{expect(catalogueLabel({labels:{ar:'دوار أباينو'}},'fr')).toEqual({text:'دوار أباينو',language:'ar'});});
  it('sorts displayed labels with deterministic code ties',()=>{const items=[{id:'2',code:'B',labels:{ar:'ب',en:'Same'}},{id:'1',code:'A',labels:{ar:'أ',en:'Same'}}];expect(sortedCatalogue(items,'en').map(item=>item.code)).toEqual(['A','B']);expect(items[0].code).toBe('B');});
+ it('freezes DEV-05 action eligibility at SUBMITTED',()=>{expect(canCitizenChange('SUBMITTED')).toBe(true);expect(canStartReview('SUBMITTED')).toBe(true);for(const status of ['UNDER_REVIEW','WITHDRAWN','IN_PROCESSING','RESPONSE_SENT','CLOSED','NOT_ACCEPTED'] as const){expect(canCitizenChange(status)).toBe(false);expect(canStartReview(status)).toBe(false);}});
+ it('accepts bounded simple list criteria and rejects internal cursors',()=>{expect(complaintListQuerySchema.parse({q:'طريق',status:'UNDER_REVIEW'})).toMatchObject({q:'طريق',status:'UNDER_REVIEW'});expect(complaintListQuerySchema.safeParse({beforeReference:'not-a-reference'}).success).toBe(false);expect(complaintListQuerySchema.safeParse({q:'x'.repeat(151)}).success).toBe(false);});
 });

@@ -8,6 +8,7 @@ import {catalogueLabel,codePoints,complaintFieldsSchema,emptyComplaint,sortedCat
 import {recoverComplaintAction,reloadComplaintCatalogues,submitComplaintAction} from '../actions';
 import {useFlowMemory} from './flow-memory';
 import {ComplaintFacts} from './detail';
+import {ConfirmationDialog} from '@/shared/ui/confirmation-dialog';
 
 export function ComplaintWizard({actor,commandKey,initialCatalogues}:{actor:string;commandKey:string;initialCatalogues:Catalogues|null}){
  const locale=useLocale() as 'ar'|'fr'|'en',c=complaintCopy[locale],router=useRouter(),memory=useFlowMemory();
@@ -15,17 +16,20 @@ export function ComplaintWizard({actor,commandKey,initialCatalogues}:{actor:stri
  const {register,control,getValues,setError,clearErrors,setFocus,formState:{errors}}=useForm<ComplaintFields>({defaultValues:saved?.fields??emptyComplaint});
  const [step,setStep]=useState(saved?.step??0),[confirmed,setConfirmed]=useState(saved?.confirmed??false);
  const [catalogues,setCatalogues]=useState(initialCatalogues),[pending,setPending]=useState(false),[message,setMessage]=useState('');
- const [uncertain,setUncertain]=useState(saved?.uncertain??false);const heading=useRef<HTMLHeadingElement>(null),finished=useRef(false),locked=useRef(false);
+ const [uncertain,setUncertain]=useState(saved?.uncertain??false),[leaveTarget,setLeaveTarget]=useState<string|null>(null);const heading=useRef<HTMLHeadingElement>(null),finished=useRef(false),locked=useRef(false);
  const fields=useWatch({control,compute:(values:ComplaintFields)=>values}),dirty=Object.values(fields).some(Boolean);
  useEffect(()=>{memory.write({actor,key:commandKey,fields,step,confirmed,uncertain});},[actor,commandKey,fields,step,confirmed,uncertain,memory]);
  useEffect(()=>{
   if(!dirty)return;
   const unload=(event:BeforeUnloadEvent)=>{if(!finished.current){event.preventDefault();event.returnValue='';}};
-  const leave=(event:MouseEvent)=>{const link=(event.target as HTMLElement).closest<HTMLAnchorElement>('a[href]');if(!link||finished.current)return;const target=new URL(link.href,location.href);if(/^\/(ar|fr|en)\/citizen\/complaints\/new$/.test(target.pathname))return;if(target.origin===location.origin&&target.pathname===location.pathname)return;if(!window.confirm(c.leave)){event.preventDefault();event.stopPropagation();}};
+  const leave=(event:MouseEvent)=>{const link=(event.target as HTMLElement).closest<HTMLAnchorElement>('a[href]');if(!link||finished.current)return;const target=new URL(link.href,location.href);if(/^\/(ar|fr|en)\/citizen\/complaints\/new$/.test(target.pathname))return;if(target.origin===location.origin&&target.pathname===location.pathname)return;event.preventDefault();event.stopPropagation();setLeaveTarget(target.href);};
   window.addEventListener('beforeunload',unload);document.addEventListener('click',leave,true);
   return()=>{window.removeEventListener('beforeunload',unload);document.removeEventListener('click',leave,true);};
  },[dirty,c.leave]);
- function move(next:number){setStep(next);setConfirmed(false);setMessage('');requestAnimationFrame(()=>heading.current?.focus());}
+ function move(next:number){
+  memory.write({actor,key:commandKey,fields:getValues(),step:next,confirmed:false,uncertain});
+  setStep(next);setConfirmed(false);setMessage('');requestAnimationFrame(()=>heading.current?.focus());
+ }
  function validate(all=false){
   clearErrors();const parsed=complaintFieldsSchema.safeParse(getValues());
   const relevant=all?Object.keys(emptyComplaint):step===0?['categoryId','subject','description']:['locationId','locationClarification'];
@@ -76,5 +80,5 @@ export function ComplaintWizard({actor,commandKey,initialCatalogues}:{actor:stri
  <div className="complaint-buttons">{step>0&&<button className="btn ghost" type="button" disabled={pending||uncertain} onClick={()=>move(step-1)}>{c.back}</button>}{uncertain?<button type="button" className="btn" disabled={pending} onClick={recover}>{c.recover}</button>:<button className="btn" disabled={pending} type="submit">{pending?c.pending:step===2?c.submit:c.next}</button>}</div>
  </>}
  <span className="sr-only" role="status">{pending?c.pending:''}</span>
- </form></section>;
+ </form><ConfirmationDialog open={Boolean(leaveTarget)} title={c.leaveTitle} message={c.leave} confirmLabel={c.leaveConfirm} cancelLabel={c.cancel} danger onCancel={()=>setLeaveTarget(null)} onConfirm={()=>{const target=leaveTarget;if(!target)return;finished.current=true;setLeaveTarget(null);window.location.assign(target);}}/></section>;
 }
