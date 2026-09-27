@@ -1,0 +1,81 @@
+import assert from 'node:assert/strict';
+import {randomBytes,randomUUID} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import postgres from 'postgres';
+import {canonicalCategories,canonicalLocations} from '../../fixtures/canonical-catalogue';
+import {localDatabaseUrl,runtimeDatabaseUrl} from './target';
+
+export async function verifyNotifications(adminUrl=localDatabaseUrl()){
+ const env=readFileSync('.env.local','utf8'),runtime=new URL(env.match(/^DATABASE_URL=(.+)$/m)?.[1]??runtimeDatabaseUrl());
+ runtime.pathname=new URL(adminUrl).pathname;
+ const mailerUrl=new URL(env.match(/^MAILER_DATABASE_URL=(.+)$/m)?.[1]??'');mailerUrl.pathname=runtime.pathname;
+ const admin=postgres(adminUrl,{max:3,onnotice:()=>{}}),web=postgres(runtime.href,{max:3,onnotice:()=>{}}),mailerDb=postgres(mailerUrl.href,{max:2,onnotice:()=>{}});let passed=0;
+ const check=(value:unknown,label:string)=>{assert.ok(value,label);passed++;console.log(`PASS ${label}`);};
+ const rejects=async(fn:()=>Promise<unknown>,code:string,label:string)=>{await assert.rejects(fn,error=>(error as {code?:string}).code===code,label);check(true,label);};
+ try{
+  const auth=randomUUID(),provider=randomUUID(),digest=randomBytes(32),email=`notify-${randomUUID()}@example.invalid`;
+  await admin`insert into auth.users(id,email,email_confirmed_at) values(${auth},${email},now())`;
+  const [legal]=await web`select * from app.read_signup_legal('en')`;
+  const [profile]=await web`select * from app.provision_citizen(${auth},'Notification Citizen',null,'en',${legal.terms_version_id},${legal.privacy_version_id})`;
+  await web`select * from app.create_citizen_session(${auth},${provider},${digest})`;
+  const submit=()=>web`select * from app.submit_complaint(${auth},${provider},${digest},${randomUUID()},${randomBytes(32)},${canonicalCategories[0].id},${canonicalLocations[0].id},'Notification test','A sufficiently detailed notification test complaint.',null,true)`;
+  const [first]=await submit(),[second]=await submit();
+  const [summary]=await web`select * from app.notification_summary(${auth},${provider},${digest})`;
+  check(Number(summary.change_revision)===2&&Number(summary.last_sequence)===2&&Number(summary.unread_count)===2,'submission advances monotonic notification state');
+  const listed=await web`select * from app.list_own_notifications(${auth},${provider},${digest},null,20)`;
+  check(listed.length===2&&listed[0].reference===second.reference&&listed[1].reference===first.reference,'notifications list newest first with stable sequence');
+  const [opened]=await web`select * from app.open_own_notification(${auth},${provider},${digest},${listed[0].id})`;
+  check(opened.reference===second.reference&&opened.changed,'opening an unread notification marks it once');
+  const [openedAgain]=await web`select * from app.open_own_notification(${auth},${provider},${digest},${listed[0].id})`;
+  check(openedAgain.reference===second.reference&&!openedAgain.changed,'opening a read notification is idempotent');
+  const [afterOpen]=await web`select * from app.notification_summary(${auth},${provider},${digest})`;
+  check(Number(afterOpen.change_revision)===3&&Number(afterOpen.unread_count)===1,'single-read transition advances revision once');
+  const [all]=await web`select app.mark_all_own_notifications_read(${auth},${provider},${digest}) changed`;
+  check(all.changed===1,'mark-all captures and marks the remaining unread set');
+  const [afterAll]=await web`select * from app.notification_summary(${auth},${provider},${digest})`;
+  check(Number(afterAll.change_revision)===4&&Number(afterAll.last_sequence)===2&&Number(afterAll.unread_count)===0,'mark-all preserves sequence and advances revision');
+  const otherAuth=randomUUID(),otherProvider=randomUUID(),otherDigest=randomBytes(32);
+  await admin`insert into auth.users(id,email,email_confirmed_at) values(${otherAuth},${`${otherAuth}@example.invalid`},now())`;
+  await web`select * from app.provision_citizen(${otherAuth},'Other Notification Citizen',null,'fr',${legal.terms_version_id},${legal.privacy_version_id})`;
+  await web`select * from app.create_citizen_session(${otherAuth},${otherProvider},${otherDigest})`;
+  check((await web`select * from app.open_own_notification(${otherAuth},${otherProvider},${otherDigest},${listed[0].id})`).length===0,'another Citizen cannot open a guessed notification');
+  await rejects(()=>web`select * from app.notification_summary(${auth},${randomUUID()},${digest})`,'42501','notification read rejects incorrect session binding');
+  await rejects(()=>web`select * from app.notifications`,'42501','runtime cannot read notification rows directly');
+  await rejects(()=>web`select * from app.email_outbox`,'42501','runtime cannot read email jobs directly');
+  await rejects(()=>mailerDb`select * from app.email_outbox`,'42501','mailer cannot read outbox rows directly');
+  await admin`update app.email_outbox set delivery_status='SENT',sent_at=now(),next_attempt_at=null,target_email=coalesce(target_email,'prior-test@example.invalid') where recipient_id<>${profile.profile_id}`;
+  await admin`update app.email_outbox set next_attempt_at=now()-interval '1 second' where recipient_id=${profile.profile_id}`;
+  check((await admin`select count(*)::int n from app.email_outbox where recipient_id=${profile.profile_id} and delivery_status='PENDING'`)[0].n===2,'two pending receipt jobs exist for worker test');
+  const claimed=await mailerDb`select * from app.claim_email_outbox(20,120)`;
+  const own=claimed.filter(row=>row.target_email===email);
+  if(claimed.length!==2){const states=await admin`select delivery_status,last_error_code,count(*)::int n,min(extract(epoch from (next_attempt_at-now())))::int wait_seconds from app.email_outbox where recipient_id=${profile.profile_id} group by delivery_status,last_error_code order by delivery_status`;const [connection]=await mailerDb`select current_database() database,current_user role`;const [fn]=await admin`select pg_get_userbyid(proowner) owner,prosecdef from pg_proc where oid='app.claim_email_outbox(integer,integer)'::regprocedure`;throw new Error(`Worker claim state ${JSON.stringify({states,connection,fn,expected:new URL(adminUrl).pathname.slice(1)})}`);}
+  check(true,'restricted worker claims both due jobs');
+  check(own.length===2&&own.every(row=>row.event_type==='RECEIPT'&&row.language==='en'),'restricted worker resolves current verified email at claim time');
+  const [complete]=await mailerDb`select app.complete_email_outbox(${own[0].id},${own[0].lease_token}) completed`;
+  check(complete.completed,'fenced completion records one sent receipt');
+  const [stale]=await mailerDb`select app.complete_email_outbox(${own[0].id},${randomUUID()}) completed`;
+  check(!stale.completed,'stale lease cannot complete a job');
+  const [retry]=await mailerDb`select app.fail_email_outbox(${own[1].id},${own[1].lease_token},true,false) status`;
+  check(retry.status==='RETRY','temporary delivery failure schedules retry');
+  await admin`update app.email_outbox set next_attempt_at=now() where id=${own[1].id}`;
+  const reclaimed=await mailerDb`select * from app.claim_email_outbox(20,120)`;
+  const retried=reclaimed.find(row=>row.id===own[1].id);check(retried&&retried.lease_token!==own[1].lease_token,'retry receives a new fencing token');if(!retried)throw new Error('Retry job was not reclaimed');
+  const [held]=await mailerDb`select app.fail_email_outbox(${retried.id},${retried.lease_token},false,false) status`;
+  check(held.status==='HELD','permanent delivery failure is held without retry');
+  const [third]=await submit();
+  const thirdClaim=(await mailerDb`select * from app.claim_email_outbox(20,120)`).find(row=>row.reference===third.reference);check(thirdClaim,'new receipt job is claimable');if(!thirdClaim)throw new Error('Receipt job was not claimed');
+  await mailerDb`select app.fail_email_outbox(${thirdClaim.id},${thirdClaim.lease_token},true,false)`;
+  await admin`update auth.users set email=${`changed-${randomUUID()}@example.invalid`} where id=${auth}`;
+  await admin`update app.email_outbox set next_attempt_at=now() where id=${thirdClaim.id}`;
+  const afterChange=await mailerDb`select * from app.claim_email_outbox(20,120)`;
+  check(!afterChange.some(row=>row.id===thirdClaim.id)&&(await admin`select delivery_status,last_error_code from app.email_outbox where id=${thirdClaim.id}`)[0].last_error_code==='RECIPIENT_CHANGED','email change safely holds an existing retry job');
+  const [complaint]=await admin`select c.*,e.audit_event_id from app.complaints c join app.complaint_events e on e.complaint_id=c.id where c.reference=${first.reference}`;
+  await rejects(()=>admin`insert into app.notifications(recipient_id,source_event_id,complaint_id,type,recipient_sequence) values(${profile.profile_id},${complaint.audit_event_id},${complaint.id},'COMPLAINT_RECEIVED',999)`,'23514','duplicate event cannot bypass notification relationship integrity');
+  await rejects(()=>admin`insert into app.email_outbox(recipient_id,complaint_id,source_event_id,event_type,language) values(${profile.profile_id},${complaint.id},${randomUUID()},'RECEIPT','en')`,'23514','email relationship guard rejects unrelated evidence');
+  await admin`update app.application_profiles set access_status='DISABLED' where id=${profile.profile_id}`;
+  await rejects(()=>web`select * from app.notification_summary(${auth},${provider},${digest})`,'42501','disabled Citizen cannot poll notifications');
+  console.log(`Notification database: ${passed} checks passed.`);
+ }finally{await mailerDb.end();await web.end();await admin.end();}
+}
+
+if(import.meta.url===`file:///${process.argv[1]?.replaceAll('\\','/')}`)verifyNotifications().catch(error=>{console.error('Notification database verification failed:',error.code??'',error.message);process.exitCode=1;});

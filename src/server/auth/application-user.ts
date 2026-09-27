@@ -6,6 +6,7 @@ import {verifiedProviderIdentity} from './provider';
 import {digestSessionSecret,readSessionSecret} from '@/server/sessions/cookie';
 import {resolveUserSession} from '@/server/identity/repository';
 import {isStaff} from '@/features/commune-auth/model';
+import {safeReturnTo} from '@/features/auth/model';
 export type ApplicationUser={state:string;role:'CITIZEN'|'AGENT'|'ADMIN';authUserId:string;email:string;providerSessionId:string;sessionId:string;profileId:string;fullName:string;phone:string|null;language:'ar'|'fr'|'en';revision:number;absoluteExpiresAt:string;secret:string;digest:Buffer};
 export async function currentApplicationUser(activity=false):Promise<ApplicationUser|null>{
  const secret=await readSessionSecret();if(!secret)return null;
@@ -29,9 +30,9 @@ export async function requireAuthenticatedApplicationUser(locale:string,area:'ci
 export const requireCitizen=(locale:string,activity=false)=>requireAuthenticatedApplicationUser(locale,'citizen',activity);
 // Entry-page convenience only: protected pages/actions still authorize independently.
 // Passive checks must neither renew activity nor recreate an expired application session.
-export async function redirectAuthenticatedUser(locale:string){
+export async function redirectAuthenticatedUser(locale:string,returnTo?:string){
  const user=await currentApplicationUser(false);
- if(user?.state==='VALID')redirect(`/${locale}/${user.role==='CITIZEN'?'citizen':'commune'}`);
+ if(user?.state==='VALID')redirect(user.role==='CITIZEN'?safeReturnTo(returnTo,locale):`/${locale}/commune`);
 }
 export const requireCommuneStaff=(locale:string,activity=false)=>requireAuthenticatedApplicationUser(locale,'commune',activity);
 export async function requireAdmin(locale:string){const user=await requireCommuneStaff(locale);if(user.role!=='ADMIN')redirect(`/${locale}/commune/access-denied`);return user;}

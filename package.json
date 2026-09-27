@@ -19,6 +19,8 @@
     "db:reset": "tsx scripts/local.ts reset",
     "db:seed": "tsx scripts/local.ts seed",
     "db:verify": "tsx scripts/local.ts verify",
+    "email:drain": "tsx scripts/process-email-outbox.ts --once",
+    "email:worker": "tsx scripts/process-email-outbox.ts --watch",
     "staff:bootstrap": "tsx scripts/bootstrap-local-staff.ts"
   },
   "dependencies": {
@@ -30,6 +32,7 @@
     "@supabase/supabase-js": "2.116.0",
     "next": "16.3.5",
     "next-intl": "4.14.5",
+    "nodemailer": "10.0.8",
     "postgres": "3.4.9",
     "react": "19.3.0",
     "react-dom": "19.3.0",

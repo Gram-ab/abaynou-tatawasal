@@ -12,7 +12,7 @@ export async function verifyComplaints(url:string){
  const web=postgres(target.href,{max:4,onnotice:()=>{}});
  const check=(value:unknown,label:string)=>{assert.ok(value,label);passed++;console.log(`PASS ${label}`);};
  try{
-  check((await db`select count(*)::int n from information_schema.tables where table_schema='app' and table_type='BASE TABLE'`)[0].n===16,'sixteen application entities');
+  check((await db`select count(*)::int n from information_schema.tables where table_schema='app' and table_type='BASE TABLE'`)[0].n===19,'nineteen application entities');
   check((await db`select count(*)::int n from app.categories`)[0].n===7,'seven approved categories');
   check((await db`select count(*)::int n from app.location_translations where language<>'ar'`)[0].n===0,'no invented location translations');
   const auth=randomUUID(),provider=randomUUID(),digest=randomBytes(32);
@@ -32,6 +32,8 @@ export async function verifyComplaints(url:string){
   check((await db`select count(*)::int n from app.complaints where citizen_id=${profile.profile_id}`)[0].n===1,'one persisted complaint');
   check((await db`select count(*)::int n from app.complaint_events`)[0].n===1,'one initial event');
   check((await db`select count(*)::int n from app.command_receipts`)[0].n===1,'one command receipt');
+  check((await db`select count(*)::int n from app.notifications n join app.complaints c on c.id=n.complaint_id where c.reference=${first.reference}`)[0].n===1,'one Citizen receipt notification');
+  check((await db`select count(*)::int n from app.email_outbox o join app.complaints c on c.id=o.complaint_id where c.reference=${first.reference}`)[0].n===1,'one receipt email job');
   const rejects=async(fn:()=>Promise<unknown>,code:string,label:string)=>{await assert.rejects(fn,error=>(error as {code?:string}).code===code,label);check(true,label);};
   const concurrent=await Promise.all(Array.from({length:8},submit));
   check(concurrent.every(rows=>rows[0].reference===first.reference&&rows[0].replayed),'eight concurrent duplicate requests replay one result');
@@ -41,7 +43,7 @@ export async function verifyComplaints(url:string){
   await rejects(()=>web`select * from app.submit_complaint(${auth},${provider},${digest},${key},${randomBytes(32)},${canonicalCategories[0].id},${canonicalLocations[0].id},'Different subject',${description},null,true)`,'P0409','changed payload conflicts');
   const [recovery]=await web`select * from app.recover_complaint_command(${auth},${provider},${digest},${key})`;
   check(recovery.reference===first.reference,'lost response recovered by command key');
-  for(const table of ['categories','category_translations','locations','location_translations','complaints','complaint_events','command_receipts']){
+  for(const table of ['categories','category_translations','locations','location_translations','complaints','complaint_events','command_receipts','notification_state','notifications','email_outbox']){
    await rejects(()=>web.unsafe(`select * from app.${table}`),'42501',`runtime raw read denied: ${table}`);
    await rejects(()=>web.unsafe(`delete from app.${table}`),'42501',`runtime deletion denied: ${table}`);
   }
@@ -70,12 +72,12 @@ export async function verifyComplaints(url:string){
   await db`update auth.users set email_confirmed_at=null where id=${auth}`;
   await rejects(()=>submit(),'42501','unconfirmed identity rejected inside command');
   await db`update auth.users set email_confirmed_at=now() where id=${auth}`;
-  const counts=async()=> (await db`select (select count(*) from app.complaints)::int complaints,(select count(*) from app.audit_events)::int audits,(select count(*) from app.complaint_events)::int events,(select count(*) from app.command_receipts)::int receipts`)[0];
+  const counts=async()=> (await db`select (select count(*) from app.complaints)::int complaints,(select count(*) from app.audit_events)::int audits,(select count(*) from app.complaint_events)::int events,(select count(*) from app.command_receipts)::int receipts,(select count(*) from app.notifications)::int notifications,(select count(*) from app.email_outbox)::int emails`)[0];
   const beforeFailure=await counts();
   await db.unsafe("create function app.test_reject_receipt() returns trigger language plpgsql as $$ begin raise exception using errcode='23514',message='Synthetic receipt failure';end $$; create trigger test_receipt_failure before insert on app.command_receipts for each row execute function app.test_reject_receipt()");
   try{
    await rejects(()=>web`select * from app.submit_complaint(${auth},${provider},${digest},${randomUUID()},${randomBytes(32)},${canonicalCategories[0].id},${canonicalLocations[0].id},${subject},${description},null,true)`,'23514','late receipt failure aborts submission');
-   check(JSON.stringify(await counts())===JSON.stringify(beforeFailure),'late failure rolls back complaint, audit, event and receipt');
+   check(JSON.stringify(await counts())===JSON.stringify(beforeFailure),'late failure rolls back complaint, audit, event, notification, email and receipt');
   }finally{await db.unsafe('drop trigger test_receipt_failure on app.command_receipts; drop function app.test_reject_receipt()');}
   const [definition]=await db`select pg_get_functiondef('app.new_complaint_reference()'::regprocedure) ddl`;
   await db.unsafe('create sequence app.test_reference_attempt; grant usage on sequence app.test_reference_attempt to app_writer');

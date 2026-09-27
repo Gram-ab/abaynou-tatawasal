@@ -34,7 +34,7 @@ export function ComplaintWizard({actor,commandKey,initialCatalogues}:{actor:stri
   if(issues.length){const first=issues[0].path[0] as keyof ComplaintFields;if(all)setStep(['categoryId','subject','description'].includes(first)?0:1);setMessage(c.validation);setTimeout(()=>setFocus(first),0);return false;}return true;
  }
  async function refreshChoices(){try{const choices=await reloadComplaintCatalogues();setCatalogues(choices);if(!choices)setMessage(c.catalogue);}catch{setMessage(c.catalogue);}}
- function goToResult(reference:string){finished.current=true;memory.write(null);router.replace(`/${locale}/citizen/complaints/${reference}`);}
+ function goToResult(reference:string){finished.current=true;memory.write(null);router.replace(`/${locale}/citizen/complaints/${reference}`);router.refresh();}
  async function recover(){
   if(locked.current)return;locked.current=true;setPending(true);
   try{const result=await recoverComplaintAction(commandKey);if(result.reference){goToResult(result.reference);return;}if(result.error)setMessage(result.error==='session'?c.session:c.uncertain);else{setUncertain(false);setMessage(c.retry);}}

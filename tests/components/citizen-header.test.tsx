@@ -7,7 +7,7 @@ import {NextIntlClientProvider} from 'next-intl';
 import {messages} from '../../src/shared/i18n/messages';
 import {CitizenHeader} from '../../src/features/citizen-account/components/citizen-header';
 vi.mock('next/navigation',()=>({useRouter:()=>({push:vi.fn()})}));
-vi.mock('@/shared/i18n/navigation',()=>({usePathname:()=>'/citizen',Link:({href,children,...props}:React.AnchorHTMLAttributes<HTMLAnchorElement>)=><a href={href} {...props}>{children}</a>}));
+vi.mock('@/shared/i18n/navigation',()=>({usePathname:()=>'/citizen',useRouter:()=>({refresh:vi.fn()}),Link:({href,children,...props}:React.AnchorHTMLAttributes<HTMLAnchorElement>)=><a href={href} {...props}>{children}</a>}));
 vi.mock('@/features/auth/actions',()=>({logoutAction:vi.fn()}));
 vi.mock('@/features/commune-auth/actions',()=>({staffLogout:vi.fn()}));
 afterEach(cleanup);
@@ -18,4 +18,5 @@ describe('Citizen dashboard header',()=>{
  it('outside pointer and focus leaving dismiss dropdown',()=>{mount();const trigger=screen.getByRole('button',{name:'Review Citizen'});fireEvent.click(trigger);fireEvent.pointerDown(document.body);expect(trigger).toHaveAttribute('aria-expanded','false');fireEvent.click(trigger);fireEvent.blur(trigger,{relatedTarget:document.body});expect(trigger).toHaveAttribute('aria-expanded','false');});
  it('language links remain available in the compact control',()=>{mount();const trigger=screen.getByRole('button',{name:'Langue'});fireEvent.click(trigger);const panel=document.getElementById(trigger.getAttribute('aria-controls')!)!;expect(within(panel).getAllByRole('link')).toHaveLength(3);});
  it('mobile menu supports Escape, outside click and account-name link',()=>{const {container}=mount();const trigger=container.querySelector('.hamb')!;fireEvent.click(trigger);expect(trigger).toHaveAttribute('aria-expanded','true');expect(container.querySelector('.citizen-mobile-account')).toHaveTextContent('Review Citizen');fireEvent.keyDown(document,{key:'Escape'});expect(trigger).toHaveAttribute('aria-expanded','false');expect(trigger).toHaveFocus();fireEvent.click(trigger);fireEvent.pointerDown(document.body);expect(trigger).toHaveAttribute('aria-expanded','false');});
+ it('keeps notification access visible in the approved shell',()=>{mount();expect(screen.getByRole('link',{name:'Notifications'})).toHaveAttribute('href','/citizen/notifications');});
 });

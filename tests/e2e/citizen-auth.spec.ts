@@ -71,7 +71,7 @@ test.describe.serial('Citizen identity and account access',()=>{
   await fillPassword(page.locator('input[name="currentPassword"]'),wrongPassword);await fillPassword(page.locator('input[name="password"]'),newPassword);await fillPassword(page.locator('input[name="confirmation"]'),newPassword);await submit(page);
   await expect(page.locator('.form-result.error')).toContainText('current password');await expectPassword(page.locator('input[name="currentPassword"]'),wrongPassword);await expectPassword(page.locator('input[name="password"]'),newPassword);
   await fillPassword(page.locator('input[name="currentPassword"]'),password);await submit(page);await expect(page.getByRole('status')).toContainText('Change saved');password=newPassword;
-  await page.getByRole('button',{name:'Sign out'}).click();await expect(page).toHaveURL(/\/en$/);await login(page,email,password);await expect(page).toHaveURL(/\/en\/citizen$/);
+  await page.locator('.citizen-user .citizen-disclosure-trigger').click();await page.getByRole('button',{name:'Sign out'}).click();await expect(page).toHaveURL(/\/en$/);await login(page,email,password);await expect(page).toHaveURL(/\/en\/citizen$/);
  });
 
  test('email change requires reauthentication and only the new address confirmation',async({page,request,browser})=>{

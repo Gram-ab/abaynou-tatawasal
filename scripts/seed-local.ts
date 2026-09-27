@@ -55,7 +55,12 @@ async function main() {
    execFileSync('git',['check-ignore','--quiet','.env.local'],{stdio:'ignore'});
    const fingerprintSecret=prior.match(/^COMMAND_FINGERPRINT_SECRET=(.+)$/m)?.[1]??randomBytes(32).toString('hex');
    if(!/^[a-f0-9]{64}$/.test(fingerprintSecret))throw new Error('Invalid existing fingerprint configuration');
-   writeFileSync('.env.local',`APP_ENV=local\nAPP_ORIGIN=http://127.0.0.1:3000\nDATABASE_URL=${runtime.href}\nSUPABASE_URL=${status.API_URL}\nSUPABASE_PUBLISHABLE_KEY=${status.ANON_KEY}\nAUTH_COOKIE_SECRET=${cookieSecret}\nCOMMAND_FINGERPRINT_SECRET=${fingerprintSecret}\n`,{mode:0o600});
+   const priorMailerUrl=prior.match(/^MAILER_DATABASE_URL=(.+)$/m)?.[1];
+   const priorMailerPassword=priorMailerUrl?new URL(priorMailerUrl).password:'';
+   const mailerPassword=/^[a-f0-9]{64}$/.test(priorMailerPassword)?priorMailerPassword:randomBytes(32).toString('hex');
+   await sql.unsafe(`alter role app_mailer password '${mailerPassword}'`);
+   const mailerRuntime=new URL(url);mailerRuntime.username='app_mailer';mailerRuntime.password=mailerPassword;
+   writeFileSync('.env.local',`APP_ENV=local\nAPP_ORIGIN=http://127.0.0.1:3000\nDATABASE_URL=${runtime.href}\nMAILER_DATABASE_URL=${mailerRuntime.href}\nSUPABASE_URL=${status.API_URL}\nSUPABASE_PUBLISHABLE_KEY=${status.ANON_KEY}\nAUTH_COOKIE_SECRET=${cookieSecret}\nCOMMAND_FINGERPRINT_SECRET=${fingerprintSecret}\nSMTP_HOST=127.0.0.1\nSMTP_PORT=54325\nSMTP_SECURE=false\nMAIL_FROM=Abaynou Tatawasal <no-reply@abaynou.test>\n`,{mode:0o600});
   }
   console.log(`Development fixtures ready: ${publications} new publications; settings changed: ${settingsChanged}. Runtime credential stored only in ignored .env.local.`);
  } finally {await sql.end();}

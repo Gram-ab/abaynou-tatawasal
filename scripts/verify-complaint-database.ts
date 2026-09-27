@@ -12,6 +12,7 @@ const podman=join(process.env.LOCALAPPDATA??'','Programs','Podman','podman.exe')
 process.env.DOCKER_HOST='npipe:////./pipe/podman-machine-default';
 process.env.PATH=join(process.env.LOCALAPPDATA??'','Programs','Podman')+';'+process.env.PATH;
 async function main(){
+ const notificationsOnly=process.argv.includes('--notifications-only');
  const source=localDatabaseUrl(),admin=postgres(source,{max:1,onnotice:()=>{}});
  const name=`dev04a_verify_${randomUUID().replaceAll('-','')}`;
  let scratch:ReturnType<typeof postgres>|undefined;
@@ -22,7 +23,7 @@ async function main(){
   const target=new URL(source);target.pathname='/'+name;scratch=postgres(target.href,{max:1,onnotice:()=>{}});
   await scratch.unsafe('create schema extensions; create extension pgcrypto with schema extensions');
   // pg_dump 17+ client safety commands are psql-only, not SQL.
-  await scratch.unsafe(schema.split('\n').filter(line=>!line.startsWith('\\')).join('\n').replace(/^CREATE POLICY complaint_verified_identity\b[\s\S]*?;\r?\n/gm,''));
+  await scratch.unsafe(schema.split('\n').filter(line=>!line.startsWith('\\')).join('\n').replace(/^CREATE POLICY (?:complaint_verified_identity|mail_worker_identity)\b[\s\S]*?;\r?\n/gm,''));
   // pg_dump disables RLS for restoration; runtime security-definer functions require it enabled.
   await scratch.unsafe('set row_security = on');
   for(const file of readdirSync('supabase/migrations').filter(file=>file.endsWith('.sql')).sort()){
@@ -35,11 +36,15 @@ async function main(){
   await scratch`select app.configure_development_settings(0,'+00000000000','commune@example.invalid','https://chikaya.ma/',${scratch.json(developmentSettings)})`;
   await seedCatalogues(scratch);await seedCatalogues(scratch);
   console.log('PASS isolated canonical reconstruction and idempotent rerun');
-  for(const test of ['foundation','public-boundary','citizen-boundary','commune-boundary']){
+  for(const test of notificationsOnly?[]:['foundation','public-boundary','citizen-boundary','commune-boundary']){
+   console.log(`RUN isolated ${test}`);
    execFileSync(process.execPath,['node_modules/tsx/dist/cli.mjs',`tests/database/${test}.ts`],{stdio:'inherit',env:{...process.env,DEV04A_VERIFICATION_DATABASE:name}});
   }
-  const {verifyComplaints}=await import('../tests/database/complaint-boundary');
-  await verifyComplaints(target.href);
+  if(!notificationsOnly){console.log('RUN isolated complaint-boundary');const {verifyComplaints}=await import('../tests/database/complaint-boundary');await verifyComplaints(target.href);}
+  console.log('RUN isolated notification-boundary');
+  const {verifyNotifications}=await import('../tests/database/notification-boundary');
+  await verifyNotifications(target.href);
+  console.log('PASS complete isolated DEV-04B database verification');
  }finally{
   await scratch?.end();
   await admin.unsafe(`drop database if exists "${name}" with (force)`);await admin.end();

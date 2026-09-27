@@ -7,6 +7,8 @@ import {useMenuDismiss} from '@/shared/ui/use-menu-dismiss';
 import {Brand,Languages} from '@/shared/ui/header';
 import {Link,usePathname} from '@/shared/i18n/navigation';
 import {logoutAction} from '@/features/auth/actions';
+import {NotificationBell} from '@/features/notifications/components/bell';
+import type {NotificationSummary} from '@/features/notifications/model';
 const labels={ar:{space:'فضاء المواطن',account:'حسابي',help:'المساعدة',logout:'تسجيل الخروج',menu:'قائمة المواطن',language:'اللغة'},fr:{space:'Espace citoyen',account:'Mon compte',help:'Aide',logout:'Déconnexion',menu:'Menu citoyen',language:'Langue'},en:{space:'Citizen space',account:'My account',help:'Help',logout:'Sign out',menu:'Citizen menu',language:'Language'}};
 function HeaderDisclosure({label,children,className='',accessibleLabel}:{label:ReactNode;children:ReactNode;className?:string;accessibleLabel?:string}){
  const [open,setOpen]=useState(false),root=useRef<HTMLDivElement>(null),trigger=useRef<HTMLButtonElement>(null),id=useId();
@@ -23,12 +25,12 @@ function HeaderDisclosure({label,children,className='',accessibleLabel}:{label:R
   <div id={id} className="citizen-dropdown" hidden={!open} onClick={event=>{if((event.target as HTMLElement).closest('a'))setOpen(false);}}>{children}</div>
  </div>;
 }
-export function CitizenHeader({name}:{name:string}){
+export function CitizenHeader({name,notifications={changeRevision:0,lastSequence:0,unreadCount:0}}:{name:string;notifications?:NotificationSummary}){
  const locale=useLocale() as keyof typeof labels,c=labels[locale],pathname=usePathname();
  const [open,setOpen]=useState(false),menuRoot=useMenuDismiss(open,()=>setOpen(false),1100);
  const links=<><Link href="/citizen" aria-current={pathname==='/citizen'?'page':undefined}><House size={19} aria-hidden="true"/>{c.space}</Link><Link href="/citizen/complaints/new" aria-current={pathname==='/citizen/complaints/new'?'page':undefined}><Plus size={19} aria-hidden="true"/>{complaintCopy[locale].new}</Link><Link href="/contact"><Question size={19} aria-hidden="true"/>{c.help}</Link></>;
  const logout=<form action={logoutAction}><input type="hidden" name="locale" value={locale}/><button className="signout" type="submit"><SignOut size={19} aria-hidden="true"/>{c.logout}</button></form>;
- return <header ref={menuRoot} className="citizen-header"><div className="citizen-head"><Brand/><nav className="citizen-nav" aria-label={c.menu}>{links}</nav><div className="citizen-actions">
+ return <header ref={menuRoot} className="citizen-header"><div className="citizen-head"><Brand/><nav className="citizen-nav" aria-label={c.menu}>{links}</nav><NotificationBell key={notifications.changeRevision} initial={notifications}/><div className="citizen-actions">
   <HeaderDisclosure className="citizen-language" accessibleLabel={c.language} label={<><Globe size={18} aria-hidden="true"/><span>{locale==='ar'?'العربية':locale.toUpperCase()}</span></>}><Languages/></HeaderDisclosure>
   <HeaderDisclosure className="citizen-user" label={<><span className="citizen-avatar"><User size={19} aria-hidden="true"/></span><span className="citizen-user-name">{name}</span></>}><Link href="/citizen/account"><User size={19} aria-hidden="true"/>{c.account}</Link>{logout}</HeaderDisclosure>
  </div><button className="hamb" aria-label={c.menu} aria-expanded={open} aria-controls="citizen-mobile-menu" onClick={()=>setOpen(!open)}>{open?<X size={25}/>:<List size={25}/>}</button></div>
