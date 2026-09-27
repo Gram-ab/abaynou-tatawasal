@@ -12,7 +12,7 @@ export async function verifyComplaints(url:string){
  const web=postgres(target.href,{max:4,onnotice:()=>{}});
  const check=(value:unknown,label:string)=>{assert.ok(value,label);passed++;console.log(`PASS ${label}`);};
  try{
-  check((await db`select count(*)::int n from information_schema.tables where table_schema='app' and table_type='BASE TABLE'`)[0].n===19,'nineteen application entities');
+  check((await db`select count(*)::int n from information_schema.tables where table_schema='app' and table_type='BASE TABLE'`)[0].n===20,'twenty application entities through DEV-06');
   check((await db`select count(*)::int n from app.categories`)[0].n===7,'seven approved categories');
   check((await db`select count(*)::int n from app.location_translations where language<>'ar'`)[0].n===0,'no invented location translations');
   const auth=randomUUID(),provider=randomUUID(),digest=randomBytes(32);

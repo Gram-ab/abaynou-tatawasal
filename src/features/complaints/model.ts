@@ -37,8 +37,17 @@ export const complaintStatusSchema=z.enum(complaintStatuses);
 export const complaintListQuerySchema=z.object({q:z.string().trim().max(150).optional().default(''),status:z.union([complaintStatusSchema,z.literal('')]).optional().default(''),beforeTime:z.string().datetime().optional(),beforeReference:z.string().regex(referencePattern).optional()});
 export const complaintMutationSchema=complaintFieldsSchema.extend({reference:z.string().regex(referencePattern),expectedRevision:z.coerce.number().int().positive(),commandKey:z.string().uuid()}).strict();
 export const complaintTransitionSchema=z.object({reference:z.string().regex(referencePattern),expectedRevision:z.coerce.number().int().positive(),commandKey:z.string().uuid()}).strict();
+export const complaintResponseSchema=complaintTransitionSchema.extend({body:text(2000,1),confirmed:z.literal('true')}).strict();
+export const complaintNotAcceptedSchema=complaintResponseSchema.extend({reason:z.enum(['OUT_OF_SCOPE','INSUFFICIENT_INFORMATION'])}).strict();
+export const complaintCorrectionSchema=complaintResponseSchema.extend({correctionReason:text(500,1),currentPassword:z.string().min(1).max(2048)}).strict();
+export type ResponseVersion={versionNumber:number;responseKind:'NORMAL'|'NOT_ACCEPTED';body:string;correctionReason:string|null;createdAt:Date};
 export function canCitizenChange(status:ComplaintStatus){return status==='SUBMITTED';}
 export function canStartReview(status:ComplaintStatus){return status==='SUBMITTED';}
+export function canStartProcessing(status:ComplaintStatus){return status==='UNDER_REVIEW';}
+export function canRespond(status:ComplaintStatus){return status==='IN_PROCESSING';}
+export function canNotAccept(status:ComplaintStatus){return status==='UNDER_REVIEW'||status==='IN_PROCESSING';}
+export function canCorrectResponse(status:ComplaintStatus){return status==='RESPONSE_SENT'||status==='CLOSED'||status==='NOT_ACCEPTED';}
+export function canClose(status:ComplaintStatus){return status==='RESPONSE_SENT';}
 export function catalogueLabel(item:{labels:Labels},locale:'ar'|'fr'|'en'){return {text:item.labels[locale]??item.labels.ar,language:item.labels[locale]?locale:'ar'};}
 export function sortedCatalogue(items:CatalogueItem[],locale:'ar'|'fr'|'en'){
  const collator=new Intl.Collator(locale);

@@ -1,7 +1,7 @@
 import postgres from 'postgres';
-import {receiptEmail,type ReceiptLocale} from './templates';
+import {receiptEmail,lifecycleEmail,type ReceiptLocale} from './templates';
 import {deliveryFailure,smtpTransport,type MailTransport} from './smtp';
-type Job={id:string;event_type:'RECEIPT';language:ReceiptLocale;target_email:string;reference:string;lease_token:string};
+type Job={id:string;event_type:'RECEIPT'|'RESPONSE'|'CLOSURE';language:ReceiptLocale;target_email:string;reference:string;lease_token:string};
 export type DrainResult={claimed:number;sent:number;retried:number;held:number;stale:number};
 function configuration(){
  const database=process.env.MAILER_DATABASE_URL,origin=process.env.APP_ORIGIN,host=process.env.SMTP_HOST,from=process.env.MAIL_FROM;
@@ -18,8 +18,7 @@ export async function drainEmailOutbox(options:{transport?:MailTransport}={}):Pr
   const jobs=await sql<Job[]>`select * from app.claim_email_outbox(20,120)`;result.claimed=jobs.length;
   for(const job of jobs){
    try{
-    if(job.event_type!=='RECEIPT')throw Object.assign(new Error('Unsupported mail category'),{responseCode:550});
-    const email=receiptEmail({language:job.language,reference:job.reference,origin:config.origin});
+    const email=job.event_type==='RECEIPT'?receiptEmail({language:job.language,reference:job.reference,origin:config.origin}):lifecycleEmail({language:job.language,reference:job.reference,origin:config.origin,eventType:job.event_type});
     await transport.send({to:job.target_email,from:config.from,subject:email.subject,text:email.text,html:email.html,messageId:`<${job.id}@abaynou.test>`});
     const [done]=await sql`select app.complete_email_outbox(${job.id},${job.lease_token}) completed`;
     if(done?.completed)result.sent++;else result.stale++;

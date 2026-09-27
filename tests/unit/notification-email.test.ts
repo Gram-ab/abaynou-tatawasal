@@ -1,7 +1,7 @@
 import {describe,expect,it,vi} from 'vitest';
 import {notificationCopy} from '../../src/features/notifications/copy';
 import {notificationCursorSchema,notificationIdSchema} from '../../src/features/notifications/model';
-import {receiptEmail} from '../../src/server/email/templates';
+import {receiptEmail,lifecycleEmail} from '../../src/server/email/templates';
 import {deliveryFailure,smtpTransport} from '../../src/server/email/smtp';
 
 describe('DEV-04B notification and receipt-email model',()=>{
@@ -14,6 +14,7 @@ describe('DEV-04B notification and receipt-email model',()=>{
   for(const privateValue of ['private complaint description','private subject','location clarification','+212600000000'])expect(email.html+email.text).not.toContain(privateValue);
  });
  it('classifies permanent and uncertain SMTP failures without exposing payloads',()=>{expect(deliveryFailure({responseCode:550})).toEqual({retryable:false,uncertain:false});expect(deliveryFailure({code:'ETIMEDOUT'})).toEqual({retryable:true,uncertain:true});expect(deliveryFailure({command:'DATA'})).toEqual({retryable:true,uncertain:true});});
+ for(const language of ['ar','fr','en'] as const)for(const eventType of ['RESPONSE','CLOSURE'] as const)it(`${language} ${eventType} email is localized and privacy-minimal`,()=>{const email=lifecycleEmail({language,eventType,reference:'AB-2345-6789-ABCD',origin:'http://127.0.0.1:3000'});expect(email.text).toContain('AB-2345-6789-ABCD');expect(email.link).toContain(`/${language}/login?returnTo=`);for(const privateValue of ['response body','rejection explanation','private description','+212600000000'])expect(email.html+email.text).not.toContain(privateValue);});
  it('uses the provider-independent SMTP adapter',async()=>{
   const sendMail=vi.fn().mockResolvedValue({messageId:'accepted'}),close=vi.fn();
   const createTransport=vi.spyOn((await import('nodemailer')).default,'createTransport').mockReturnValue({sendMail,close} as never);
