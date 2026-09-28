@@ -1,0 +1,2 @@
+import {requireCommuneStaff} from '@/server/auth/application-user';import {StaffEmailForm} from '@/features/commune-auth/email-form';import {communeCopy,type CommuneLocale} from '@/features/commune-auth/copy';
+export default async function Page({params}:{params:Promise<{locale:CommuneLocale}>}){const {locale}=await params;await requireCommuneStaff(locale);const c=communeCopy[locale];return <section><h1>{c.changeEmail}</h1><div className="commune-card"><p>{c.changeEmailHelp}</p><StaffEmailForm/></div></section>}

@@ -21,7 +21,8 @@
     "db:verify": "tsx scripts/local.ts verify",
     "email:drain": "tsx scripts/process-email-outbox.ts --once",
     "email:worker": "tsx scripts/process-email-outbox.ts --watch",
-    "staff:bootstrap": "tsx scripts/bootstrap-local-staff.ts"
+    "staff:bootstrap": "tsx scripts/bootstrap-local-staff.ts",
+    "staff:authority": "tsx scripts/manage-staff-authority.ts"
   },
   "dependencies": {
     "@fontsource/ibm-plex-sans-arabic": "5.3.0",

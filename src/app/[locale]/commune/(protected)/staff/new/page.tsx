@@ -1,0 +1,2 @@
+import {requireAdmin} from '@/server/auth/application-user';import {InviteAgentForm} from '@/features/staff-admin/forms';import {staffAdminCopy,type StaffAdminLocale} from '@/features/staff-admin/copy';
+export default async function Page({params}:{params:Promise<{locale:StaffAdminLocale}>}){const {locale}=await params;await requireAdmin(locale);return <section><h1>{staffAdminCopy[locale].new}</h1><div className="commune-card"><InviteAgentForm/></div></section>}

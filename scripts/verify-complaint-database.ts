@@ -25,7 +25,7 @@ async function main(){
   const target=new URL(source);target.pathname='/'+name;scratch=postgres(target.href,{max:1,onnotice:()=>{}});
   await scratch.unsafe('create schema extensions; create extension pgcrypto with schema extensions');
   // pg_dump 17+ client safety commands are psql-only, not SQL.
-  await scratch.unsafe(schema.split('\n').filter(line=>!line.startsWith('\\')).join('\n').replace(/^CREATE POLICY (?:complaint_verified_identity|mail_worker_identity)\b[\s\S]*?;\r?\n/gm,''));
+  await scratch.unsafe(schema.split('\n').filter(line=>!line.startsWith('\\')).join('\n').replace(/^CREATE POLICY (?:complaint_verified_identity|mail_worker_identity|staff_admin_provider_read)\b[\s\S]*?;\r?\n/gm,''));
   // pg_dump disables RLS for restoration; runtime security-definer functions require it enabled.
   await scratch.unsafe('set row_security = on');
   for(const file of readdirSync('supabase/migrations').filter(file=>file.endsWith('.sql')).sort()){
@@ -46,6 +46,7 @@ async function main(){
   if(!notificationsOnly&&!dev06Only){console.log('RUN isolated dev05-boundary');const {verifyDev05}=await import('../tests/database/dev05-boundary');await verifyDev05(target.href);}
   if(!notificationsOnly&&!dev05Only){console.log('RUN isolated dev06-boundary');const {verifyDev06}=await import('../tests/database/dev06-boundary');await verifyDev06(target.href);}
   if(!dev05Only){console.log('RUN isolated notification-boundary');const {verifyNotifications}=await import('../tests/database/notification-boundary');await verifyNotifications(target.href);}
+  if(!notificationsOnly&&!dev05Only&&!dev06Only){console.log('RUN isolated dev07-boundary');const {verifyDev07}=await import('../tests/database/dev07-boundary');await verifyDev07(target.href);}
   console.log(`PASS complete isolated ${dev06Only?'DEV-06':dev05Only?'DEV-05':notificationsOnly?'DEV-04B':'complaint database'} verification`);
  }finally{
   await scratch?.end();

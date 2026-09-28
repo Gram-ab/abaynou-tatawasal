@@ -1,0 +1,18 @@
+import {beforeEach,it,expect,vi} from 'vitest';
+import {disposablePassword} from '../support/disposable-password';
+const m=vi.hoisted(()=>({detail:vi.fn(),find:vi.fn(),existing:vi.fn(),change:vi.fn(),invite:vi.fn(),audit:vi.fn(),signin:vi.fn()}));
+vi.mock('next/navigation',()=>({redirect:vi.fn()}));
+vi.mock('next/cache',()=>({revalidatePath:vi.fn()}));
+vi.mock('@/server/auth/application-user',()=>({requireAdmin:async()=>({email:'admin@example.test',authUserId:'admin'})}));
+vi.mock('@/server/auth/provider',()=>({appOrigin:()=> 'http://127.0.0.1:3000',isolatedProviderClient:()=>({auth:{signInWithPassword:m.signin,signOut:vi.fn()}})}));
+vi.mock('@/server/auth/staff-admin-provider',()=>({correctProviderInvitation:m.change,findInvitedStaff:m.find,findStaffByEmail:m.existing,inviteStaff:m.invite,removeInterruptedInvitation:vi.fn(),setProviderEnabled:vi.fn()}));
+vi.mock('@/server/staff/repository',()=>({staffDetail:m.detail,recordSecurityAction:m.audit,provisionAgent:vi.fn(),setAgentStatus:vi.fn(),updateAgent:vi.fn()}));
+import {correctInvitationEmail} from '@/features/staff-admin/actions';
+const id=crypto.randomUUID();
+const submit=()=>{const form=new FormData();Object.entries({locale:'en',profileId:id,revision:'1',email:'old@example.test',newEmail:'new@example.test',currentPassword:disposablePassword(),confirmed:'on'}).forEach(([k,v])=>form.set(k,v));return correctInvitationEmail({status:'idle'},form);};
+beforeEach(()=>{vi.resetAllMocks();m.signin.mockResolvedValue({data:{user:{id:'admin'}},error:null});m.detail.mockResolvedValue({profile_id:id,role:'AGENT',email:'old@example.test',revision:1,preferred_language:'fr',email_confirmed_at:null,last_sign_in_at:null});m.find.mockResolvedValue({id:'target',email_confirmed_at:null,last_sign_in_at:null});m.existing.mockResolvedValue(null);m.change.mockResolvedValue({error:null});m.invite.mockResolvedValue({error:null,data:{user:{id:'target'}}});});
+it('rejects verified members without changing provider identity',async()=>{m.detail.mockResolvedValue({role:'AGENT',email_confirmed_at:new Date()});expect((await submit()).code).toBe('activatedEmail');expect(m.change).not.toHaveBeenCalled();});
+it('reports an already registered address without changing either account',async()=>{m.existing.mockResolvedValue({id:'other'});expect((await submit()).code).toBe('emailInUse');expect(m.change).not.toHaveBeenCalled();});
+it('rejects stale or tampered target email before provider mutation',async()=>{m.detail.mockResolvedValue({role:'AGENT',email:'different@example.test',revision:1});expect((await submit()).code).toBe('conflict');expect(m.change).not.toHaveBeenCalled();});
+it('reissues an invitation for the same identity instead of a signup email',async()=>{expect((await submit()).status).toBe('success');expect(m.invite).toHaveBeenCalledWith('new@example.test','http://127.0.0.1:3000/en/commune/auth/confirm','fr');expect(m.audit).toHaveBeenCalled();});
+it('reports delivery failure truthfully',async()=>{m.invite.mockResolvedValue({error:{message:'failed'},data:{user:null}});expect((await submit()).code).toBe('resendFailed');});

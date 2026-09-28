@@ -1,0 +1,7 @@
+{{ if eq .Data.preferred_language "ar" }}
+<h2 dir="rtl">دعوة إلى فضاء الجماعة</h2><p dir="rtl">افتح الصفحة ثم أكّد الدعوة واختر كلمة مرورك. لا ترسل هذا الرابط إلى أي شخص.</p><p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=invite">متابعة الدعوة</a></p>
+{{ else if eq .Data.preferred_language "fr" }}
+<h2>Invitation à l’espace commune</h2><p>Ouvrez la page, confirmez l’invitation, puis choisissez votre mot de passe. Ne partagez pas ce lien.</p><p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=invite">Continuer</a></p>
+{{ else }}
+<h2>Commune space invitation</h2><p>Open the page, confirm the invitation, then choose your password. Do not share this link.</p><p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=invite">Continue</a></p>
+{{ end }}

@@ -60,7 +60,7 @@ async function main() {
    const mailerPassword=/^[a-f0-9]{64}$/.test(priorMailerPassword)?priorMailerPassword:randomBytes(32).toString('hex');
    await sql.unsafe(`alter role app_mailer password '${mailerPassword}'`);
    const mailerRuntime=new URL(url);mailerRuntime.username='app_mailer';mailerRuntime.password=mailerPassword;
-   writeFileSync('.env.local',`APP_ENV=local\nAPP_ORIGIN=http://127.0.0.1:3000\nDATABASE_URL=${runtime.href}\nMAILER_DATABASE_URL=${mailerRuntime.href}\nSUPABASE_URL=${status.API_URL}\nSUPABASE_PUBLISHABLE_KEY=${status.ANON_KEY}\nAUTH_COOKIE_SECRET=${cookieSecret}\nCOMMAND_FINGERPRINT_SECRET=${fingerprintSecret}\nSMTP_HOST=127.0.0.1\nSMTP_PORT=54325\nSMTP_SECURE=false\nMAIL_FROM=Abaynou Tatawasal <no-reply@abaynou.test>\n`,{mode:0o600});
+   writeFileSync('.env.local',`APP_ENV=local\nAPP_ORIGIN=http://127.0.0.1:3000\nDATABASE_URL=${runtime.href}\nMAILER_DATABASE_URL=${mailerRuntime.href}\nSUPABASE_URL=${status.API_URL}\nSUPABASE_PUBLISHABLE_KEY=${status.ANON_KEY}\nSUPABASE_SERVICE_ROLE_KEY=${status.SERVICE_ROLE_KEY}\nAUTH_COOKIE_SECRET=${cookieSecret}\nCOMMAND_FINGERPRINT_SECRET=${fingerprintSecret}\nSMTP_HOST=127.0.0.1\nSMTP_PORT=54325\nSMTP_SECURE=false\nMAIL_FROM=Abaynou Tatawasal <no-reply@abaynou.test>\n`,{mode:0o600});
   }
   console.log(`Development fixtures ready: ${publications} new publications; settings changed: ${settingsChanged}. Runtime credential stored only in ignored .env.local.`);
  } finally {await sql.end();}
