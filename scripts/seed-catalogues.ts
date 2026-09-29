@@ -1,5 +1,4 @@
 import type postgres from 'postgres';
-import {isDeepStrictEqual} from 'node:util';
 import {canonicalCategories,canonicalLocations} from '../fixtures/canonical-catalogue';
 
 /** Called only by the verified local maintenance workflow, never application runtime. */
@@ -13,8 +12,7 @@ export async function seedCatalogues(sql:ReturnType<typeof postgres>){
    for(const row of rows){
     const existing=await tx`select id,code,is_active from app.${tx(parent)} where id=${row.id} or code=${row.code}`;
     if(existing.length){
-     const labels=await tx`select language,label from app.${tx(child)} where ${tx(fk)}=${row.id}`;
-     if(existing.length!==1||existing[0].id!==row.id||existing[0].code!==row.code||existing[0].is_active!==row.isActive||!isDeepStrictEqual(Object.fromEntries(labels.map(l=>[l.language,l.label])),row.labels))throw new Error('Canonical initialization conflict; existing data was not overwritten');
+     if(existing.length!==1||existing[0].id!==row.id||existing[0].code!==row.code)throw new Error('Canonical identity conflict; existing data was not overwritten');
      continue;
     }
     await tx`insert into app.${tx(parent)}(id,code,is_active) values(${row.id},${row.code},${row.isActive})`;

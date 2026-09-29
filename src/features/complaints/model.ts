@@ -49,7 +49,7 @@ export function canNotAccept(status:ComplaintStatus){return status==='UNDER_REVI
 export function canCorrectResponse(status:ComplaintStatus){return status==='RESPONSE_SENT'||status==='CLOSED'||status==='NOT_ACCEPTED';}
 export function canClose(status:ComplaintStatus){return status==='RESPONSE_SENT';}
 export function catalogueLabel(item:{labels:Labels},locale:'ar'|'fr'|'en'){return {text:item.labels[locale]??item.labels.ar,language:item.labels[locale]?locale:'ar'};}
-export function sortedCatalogue(items:CatalogueItem[],locale:'ar'|'fr'|'en'){
+export function sortedCatalogue<T extends CatalogueItem>(items:T[],locale:'ar'|'fr'|'en'){
  const collator=new Intl.Collator(locale);
  return [...items].sort((a,b)=>collator.compare(catalogueLabel(a,locale).text,catalogueLabel(b,locale).text)||a.code.localeCompare(b.code,'en')||a.id.localeCompare(b.id,'en'));
 }

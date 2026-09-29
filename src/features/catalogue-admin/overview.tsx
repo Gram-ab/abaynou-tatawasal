@@ -1,0 +1,6 @@
+import {requireAdmin} from '@/server/auth/application-user';
+import {listAdminCatalogues} from '@/server/catalogues/repository';
+import {catalogueAdminCopy,type CatalogueAdminLocale} from './copy';
+import {CatalogueSection} from './list';
+import type {CatalogueKind} from './model';
+export async function CatalogueOverview({locale,query,kind}:{locale:CatalogueAdminLocale;query:{q?:string;status?:string};kind:CatalogueKind}){const actor=await requireAdmin(locale),status=['ACTIVE','INACTIVE'].includes(query.status??'')?query.status!:'ALL',items=await listAdminCatalogues(actor,kind,{query:query.q,status}),c=catalogueAdminCopy[locale],isCategory=kind==='CATEGORY';return <section className="catalogue-page"><div className="catalogue-heading"><span className="eyebrow">{c.nav}</span><h1 id="catalogue-title">{isCategory?c.categories:c.locations}</h1><p>{isCategory?c.categoriesIntro:c.locationsIntro}</p></div><form className="catalogue-filters"><label>{c.search}<input name="q" defaultValue={query.q??''} maxLength={200}/></label><label>{c.status}<select name="status" defaultValue={status}><option value="ALL">{c.all}</option><option value="ACTIVE">{c.active}</option><option value="INACTIVE">{c.inactive}</option></select></label><button className="btn">{c.apply}</button></form><CatalogueSection locale={locale} kind={kind} items={items} showHeading={false}/></section>}
