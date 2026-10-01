@@ -21,10 +21,11 @@ export const chikayaUrlSchema = z.string().max(200).refine(value => {
   } catch { return false; }
 }, 'Invalid official guidance URL');
 export const phoneSchema = z.string().regex(/^\+?[0-9][0-9 ()-]{6,23}$/);
-const boundedText = (max: number) => z.string().trim().min(1).max(max);
+const boundedText = (max: number) => z.string().trim().min(1).refine(value=>Array.from(value).length<=max,'Too long');
 export const translationSchema = z.object({
   title: boundedText(200),
-  body: boundedText(30000).refine(value => !/[<>\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value), 'Unsupported markup')
+  body: boundedText(30000).refine(value => !/[<>\u0000-\u0008\u000b\u000c\u000e-\u001f]/u.test(value), 'Unsupported markup')
+    .refine(value=>value.split(/\r?\n/u).every(line=>!line.startsWith('#')||/^##\s+\S/u.test(line)),'Unsupported heading')
 }).strict();
 export const publicationSchema = z.object({
   ar: translationSchema, fr: translationSchema, en: translationSchema

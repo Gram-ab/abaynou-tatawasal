@@ -31,3 +31,5 @@ body{font-family:'IBM Plex Sans Arabic',Arial,sans-serif;font-size:16px;line-hei
 .public-viewer-name{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--g);font-size:14px}.mobile-nav .public-viewer-name{max-width:100%;padding:8px}
 
 .mobile-nav .btn.ghost{color:var(--g)}
+/* Published names are bounded visually without changing the logo or header height. */
+.brand{min-width:0;max-width:290px}.brand>span{min-width:0}.brand img{flex-shrink:0}.brand b{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.public-footer>small{overflow-wrap:anywhere;min-width:0}

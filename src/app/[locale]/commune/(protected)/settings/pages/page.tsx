@@ -1,0 +1,8 @@
+import {requireAdmin} from '@/server/auth/application-user';
+import {listAdminPages} from '@/server/content-admin/repository';
+import {Link} from '@/shared/i18n/navigation';
+import {contentAdminCopy,pageNames} from '@/features/content-admin/copy';
+import type {ContentAdminLocale} from '@/features/content-admin/model';
+import type {PageKey} from '@/features/public-content/model';
+const general:PageKey[]=['HOME','HOW_IT_WORKS','SERVICE_SCOPE','FAQ','CONTACT','USER_GUIDE'];const legal:PageKey[]=['PRIVACY','ACCESSIBILITY','TERMS'];
+export default async function Page({params,searchParams}:{params:Promise<{locale:ContentAdminLocale}>;searchParams:Promise<{group?:string}>}){const {locale}=await params,isLegal=(await searchParams).group==='legal',actor=await requireAdmin(locale),items=await listAdminPages(actor,locale),c=contentAdminCopy[locale];const section=(title:string,keys:PageKey[],id?:string)=><section className="content-list-section" id={id}><h2>{title}</h2><div className="content-page-list">{keys.map(key=>{const item=items.find(candidate=>candidate.key===key);return item&&<article key={key}><div><strong>{pageNames[locale][key]}</strong><small>{c.version} {item.currentVersion} · {new Intl.DateTimeFormat(locale,{dateStyle:'medium'}).format(item.publishedAt)}</small></div><Link href={`/commune/settings/pages/${key}`}>{c.edit}</Link></article>;})}</div></section>;return <section className="content-pages"><span className="eyebrow">{c.nav}</span><h1>{isLegal?c.legal:c.pages}</h1><p>{isLegal?c.legalIntro:c.pagesIntro}</p>{isLegal?section(c.legalGroup,legal,'legal'):section(c.publicGroup,general)}</section>;}
