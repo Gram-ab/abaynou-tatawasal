@@ -3,6 +3,7 @@ import {publicDatabase} from '@/shared/db/public';
 
 export type Locale='ar'|'fr'|'en';
 export async function applicationIdentity(auth:string){const sql=publicDatabase();const [row]=await sql`select * from app.read_application_identity(${auth})`;return row??null;}
+export async function citizenRecoveryAllowed(email:string){const sql=publicDatabase();const [row]=await sql`select app.citizen_recovery_allowed(${email}) allowed`;return row?.allowed===true;}
 export async function resolveUserSession(auth:string,provider:string,digest:Buffer,activity:boolean){const sql=publicDatabase();const [row]=await sql`select * from app.resolve_application_session(${auth},${provider},${digest},${activity})`;return row??null;}
 export async function createStaffSession(auth:string,provider:string,digest:Buffer){const sql=publicDatabase();const [row]=await sql`select * from app.create_application_session(${auth},${provider},${digest},'COMMUNE')`;return row??null;}
 export async function revokeUserSession(auth:string,provider:string,digest:Buffer){const sql=publicDatabase();await sql`select app.revoke_application_session(${auth},${provider},${digest})`;}

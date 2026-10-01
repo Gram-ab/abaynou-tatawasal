@@ -5,7 +5,7 @@ import type {EmailOtpType} from '@supabase/supabase-js';
 import {appOrigin,isolatedProviderClient,providerClient,verifiedProviderIdentity} from '@/server/auth/provider';
 import {openData,openIntent,sealData} from '@/server/auth/sealed-intent';
 import {clearSessionSecret,newSessionSecret,writeSessionSecret} from '@/server/sessions/cookie';
-import {applicationIdentity,createApplicationSession,provisionCitizen,provisioningState,revokeCurrentSession,secureCitizenSessions,updateCitizenProfile} from '@/server/identity/repository';
+import {applicationIdentity,citizenRecoveryAllowed,createApplicationSession,provisionCitizen,provisioningState,revokeCurrentSession,secureCitizenSessions,updateCitizenProfile} from '@/server/identity/repository';
 import {redirectAuthenticatedUser} from '@/server/auth/application-user';
 import {currentCitizen} from '@/server/auth/current-citizen';
 import {clearPendingSignup,readPendingSignup,storePendingSignup} from '@/server/auth/pending-signup';
@@ -46,7 +46,10 @@ export async function loginAction(_:AuthState,form:FormData):Promise<AuthState>{
 
 export async function recoveryAction(_:AuthState,form:FormData):Promise<AuthState>{
  const parsed=recoverySchema.safeParse(Object.fromEntries(form));if(!parsed.success)return fail('validation');
- const client=isolatedProviderClient();await client.auth.resetPasswordForEmail(parsed.data.email.toLowerCase(),{redirectTo:`${appOrigin()}/${parsed.data.locale}/auth/confirm`});
+ let allowed=false;try{allowed=await citizenRecoveryAllowed(parsed.data.email);}catch{/* Fail closed without revealing account state. */}
+ if(allowed){
+  const client=isolatedProviderClient();await client.auth.resetPasswordForEmail(parsed.data.email.toLowerCase(),{redirectTo:`${appOrigin()}/${parsed.data.locale}/auth/confirm`});
+ }
  return success('recoverySent');
 }
 
@@ -70,13 +73,14 @@ export async function confirmEmailAction(previous:AuthState,form:FormData):Promi
  store.delete(INTENT_COOKIE);if(error)return fail('linkInvalid');
  const identity=await verifiedProviderIdentity(client);if(!identity)return fail('linkInvalid');
  if(intent.type==='recovery'){
-  const profile=await applicationIdentity(identity.authUserId);if(profile?.role!=='CITIZEN'){await client.auth.signOut({scope:'local'});return fail('linkInvalid');}
+  const profile=await applicationIdentity(identity.authUserId);if(profile?.role!=='CITIZEN'||profile.access_status!=='ACTIVE'){await client.auth.signOut({scope:'local'});return fail('linkInvalid');}
   store.set(RECOVERY_COOKIE,sealData({authUserId:identity.authUserId,providerSessionId:identity.providerSessionId,expires:Date.now()+15*60_000}),{httpOnly:true,sameSite:'lax',secure:process.env.APP_ENV!=='local',path:'/',maxAge:900});
   redirect(`/${intent.locale}/reset-password`);
  }
  if(intent.type==='email_change'){
   const profile=await applicationIdentity(identity.authUserId);if(profile?.role!=='CITIZEN'){await client.auth.signOut({scope:'local'});return fail('linkInvalid');}
-  await secureCitizenSessions({authUserId:identity.authUserId,reason:'EMAIL_CHANGE',keepProviderSessionId:null,currentDigest:null,newDigest:null});
+  if(profile.access_status!=='ACTIVE'){await client.auth.signOut({scope:'global'});await clearSessionSecret();redirect(`/${intent.locale}/account-disabled`);}
+  try{await secureCitizenSessions({authUserId:identity.authUserId,reason:'EMAIL_CHANGE',keepProviderSessionId:null,currentDigest:null,newDigest:null});}catch{await client.auth.signOut({scope:'global'});await clearSessionSecret();redirect(`/${intent.locale}/account-disabled`);}
   await client.auth.signOut({scope:'global'});await clearSessionSecret();redirect(`/${intent.locale}/verify-email?state=email-changed`);
  }
  const state=await provisioningState(identity.authUserId);
@@ -96,8 +100,8 @@ export async function resetPasswordAction(_:AuthState,form:FormData):Promise<Aut
  const parsed=resetSchema.safeParse(Object.fromEntries(form));if(!parsed.success)return fail(parsed.error.issues[0]?.message??'validation');
  const store=await cookies();const marker=openData<{authUserId:string;providerSessionId:string;expires:number}>(store.get(RECOVERY_COOKIE)?.value);const client=await providerClient();const identity=await verifiedProviderIdentity(client);
  if(!marker||!identity||marker.authUserId!==identity.authUserId||marker.providerSessionId!==identity.providerSessionId)return fail('linkInvalid');
- const profile=await applicationIdentity(identity.authUserId);if(!profile||profile.role!=='CITIZEN')return fail('linkInvalid');
- await secureCitizenSessions({authUserId:identity.authUserId,reason:'PASSWORD_RESET',keepProviderSessionId:null,currentDigest:null,newDigest:null});
+ const profile=await applicationIdentity(identity.authUserId);if(!profile||profile.role!=='CITIZEN'||profile.access_status!=='ACTIVE')return fail('linkInvalid');
+ try{await secureCitizenSessions({authUserId:identity.authUserId,reason:'PASSWORD_RESET',keepProviderSessionId:null,currentDigest:null,newDigest:null});}catch{return fail('linkInvalid');}
  const {error}=await client.auth.updateUser({password:parsed.data.password});if(error)return fail('operationFailed');
  await client.auth.signOut({scope:'global'});store.delete(RECOVERY_COOKIE);await clearSessionSecret();redirect(`/${parsed.data.locale}/login?state=password-reset`);
 }

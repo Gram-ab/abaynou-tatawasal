@@ -17,6 +17,7 @@ async function main(){
  const dev06Only=process.argv.includes('--dev06-only');
  const dev08Only=process.argv.includes('--dev08-only');
   const dev09Only=process.argv.includes('--dev09-only');
+ const dev10Only=process.argv.includes('--dev10-only');
  const source=localDatabaseUrl(),admin=postgres(source,{max:1,onnotice:()=>{}});
  const name=`dev04a_verify_${randomUUID().replaceAll('-','')}`;
  let scratch:ReturnType<typeof postgres>|undefined;
@@ -40,6 +41,7 @@ async function main(){
   await scratch`select app.configure_development_settings(0,'+00000000000','commune@example.invalid','https://chikaya.ma/',${scratch.json(developmentSettings)})`;
   await seedCatalogues(scratch);await seedCatalogues(scratch);
   console.log('PASS isolated canonical reconstruction and idempotent rerun');
+  if(dev10Only){const {verifyDev10}=await import('../tests/database/dev10-boundary');await verifyDev10(target.href);console.log('PASS complete isolated DEV-10 verification');return;}
   for(const test of notificationsOnly||dev05Only||dev06Only||dev08Only||dev09Only?[]:['foundation','public-boundary','citizen-boundary','commune-boundary']){
    console.log(`RUN isolated ${test}`);
    execFileSync(process.execPath,['node_modules/tsx/dist/cli.mjs',`tests/database/${test}.ts`],{stdio:'inherit',env:{...process.env,DEV04A_VERIFICATION_DATABASE:name}});
@@ -51,6 +53,7 @@ async function main(){
   if(!notificationsOnly&&!dev05Only&&!dev06Only&&!dev08Only&&!dev09Only){console.log('RUN isolated dev07-boundary');const {verifyDev07}=await import('../tests/database/dev07-boundary');await verifyDev07(target.href);}
   if(!notificationsOnly&&!dev05Only&&!dev06Only&&!dev09Only){console.log('RUN isolated dev08-boundary');const {verifyDev08}=await import('../tests/database/dev08-boundary');await verifyDev08(target.href);}
   if(!notificationsOnly&&!dev05Only&&!dev06Only&&!dev08Only){console.log('RUN isolated dev09-boundary');const {verifyDev09}=await import('../tests/database/dev09-boundary');await verifyDev09(target.href);}
+  if(!notificationsOnly&&!dev05Only&&!dev06Only&&!dev08Only&&!dev09Only){console.log('RUN isolated dev10-boundary');const {verifyDev10}=await import('../tests/database/dev10-boundary');await verifyDev10(target.href);}
   console.log(`PASS complete isolated ${dev09Only?'DEV-09':dev08Only?'DEV-08':dev06Only?'DEV-06':dev05Only?'DEV-05':notificationsOnly?'DEV-04B':'complaint database'} verification`);
  }finally{
   await scratch?.end();
