@@ -4,15 +4,16 @@ import {createClient} from '@supabase/supabase-js';
 import postgres from 'postgres';
 import {z} from 'zod';
 import {localDatabaseUrl} from './local-target';
+import {e2eTarget} from './e2e-target';
 import {staffPassword} from '../src/features/commune-auth/model';
 export const staffFixtureSchema=z.object({email:z.string().trim().email().transform(v=>v.toLowerCase()),password:staffPassword,fullName:z.string().trim().min(1).max(200),role:z.enum(['AGENT','ADMIN']),language:z.enum(['ar','fr','en']).default('ar')});
 export async function bootstrapLocalStaff(input:z.input<typeof staffFixtureSchema>){
  const value=staffFixtureSchema.parse(input);
  const db=postgres(localDatabaseUrl(),{max:1,onnotice:()=>{}});
  try{
-  const status=JSON.parse(execFileSync(process.execPath,[resolve('node_modules/supabase/dist/supabase.js'),'status','-o','json'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));
+  const status=process.env.ABAYNOU_E2E_TARGET!==undefined?(()=>{const target=e2eTarget();return {API_URL:target.apiUrl,SERVICE_ROLE_KEY:target.serviceRoleKey};})():JSON.parse(execFileSync(process.execPath,[resolve('node_modules/supabase/dist/supabase.js'),'status','-o','json'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));
   const endpoint=new URL(status.API_URL);
-  if(endpoint.protocol!=='http:'||!['127.0.0.1','localhost'].includes(endpoint.hostname)||endpoint.port!=='54321')throw new Error('STOP: non-local Auth endpoint');
+  if(endpoint.protocol!=='http:'||!['127.0.0.1','localhost'].includes(endpoint.hostname)||!['54321','55321'].includes(endpoint.port))throw new Error('STOP: non-local Auth endpoint');
   const auth=createClient(endpoint.href,status.SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
   return await db.begin(async tx=>{
    await tx`select pg_advisory_xact_lock(hashtextextended(${value.email},0))`;

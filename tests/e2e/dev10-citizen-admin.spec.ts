@@ -46,7 +46,7 @@ test.describe.serial('DEV-10 Citizen account administration',()=>{
    await citizenLogin(citizen);await expect(citizen).toHaveURL('/en/citizen');
    await admin.goto('/en/commune/citizens');
    await expect(admin.getByRole('heading',{name:'Citizen accounts'})).toBeVisible();
-   await admin.locator('[name=q]').fill(citizenEmail);await admin.getByRole('button',{name:'Apply'}).click();
+   await admin.locator('[name=q]').fill(citizenEmail);await admin.getByRole('button',{name:'Apply'}).click();await expect(admin).toHaveURL(url=>url.searchParams.get('q')===citizenEmail);
    await expect(admin.locator('.citizen-admin-table')).toContainText(citizenEmail);
    await admin.getByRole('link',{name:'View details'}).click();
    await expect(admin).toHaveURL(`/en/commune/citizens/${citizenId}`);

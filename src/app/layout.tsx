@@ -9,6 +9,7 @@ import '../styles/public-shell.css';
 import '../styles/citizen-shell.css';
 import '../styles/commune-shell.css';
 import '../styles/complaints.css';
+import '../styles/form-controls.css';
 import {ComplaintFlowMemory} from '@/features/complaints/components/flow-memory';
 
 export default async function RootLayout({children}: {children: ReactNode}) {

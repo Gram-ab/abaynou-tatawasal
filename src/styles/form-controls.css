@@ -1,0 +1,22 @@
+/* Native form semantics, consistent platform styling. Enhanced picker where supported. */
+:root{--select-chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' stroke='%230f5a42' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+:root select:not([multiple]):not([size]){appearance:none;box-sizing:border-box;min-inline-size:0;max-inline-size:100%;min-block-size:46px;border:1px solid #bdc7c2;border-radius:7px;background-color:#fff;background-image:var(--select-chevron);background-repeat:no-repeat;background-position:right 13px center;background-size:16px;padding-block:9px;padding-inline:13px 40px;color:var(--ink);font:inherit;line-height:1.5;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+:root select:not([multiple]):not([size]):dir(rtl){background-position:left 13px center}
+:root select:not([multiple]):not([size]):hover:not(:disabled){border-color:#7d9e8e}
+:root select:not([multiple]):not([size]):focus-visible{outline:3px solid #ba8c36;outline-offset:3px;border-color:var(--g)}
+:root select[aria-invalid=true]:not([multiple]):not([size]){border-color:#9b332a}
+:root select:disabled{background-color:#f2f4f2;color:var(--muted);cursor:not-allowed;opacity:.7}
+@supports(appearance:base-select){
+ :root select:not([multiple]):not([size]),:root select:not([multiple]):not([size])::picker(select){appearance:base-select}
+ :root select:not([multiple]):not([size]){background-image:none;padding-inline:13px;align-items:center;gap:16px}
+ :root select:not([multiple]):not([size])::picker-icon{content:"";inline-size:16px;block-size:16px;flex:0 0 16px;background:var(--select-chevron) center/16px no-repeat;margin-inline-start:auto;transition:rotate .15s}
+ :root select:not([multiple]):not([size]):open::picker-icon{rotate:180deg}
+ :root select:not([multiple]):not([size])::picker(select){font:inherit;color:var(--ink);background:#fff;border:1px solid #cbd9d1;border-radius:9px;padding:5px;box-shadow:0 8px 24px #15372c1a;max-inline-size:calc(100vw - 24px);max-block-size:min(360px,50dvh);overflow:auto;scrollbar-width:thin;scrollbar-color:#b9ccc0 transparent}
+ :root select:not([multiple]):not([size]) option{min-block-size:44px;display:flex;align-items:center;gap:10px;padding:10px 12px;border:0;border-radius:5px;background:#fff;color:var(--ink);white-space:normal;overflow-wrap:anywhere;font-weight:400}
+ :root select:not([multiple]):not([size]) option:checked{background:var(--pale);color:var(--g);font-weight:600}
+ :root select:not([multiple]):not([size]) option:hover,:root select:not([multiple]):not([size]) option:focus{background:#f2f6f3;outline:2px solid var(--g);outline-offset:-2px}
+ :root select:not([multiple]):not([size]) option::checkmark{color:var(--g)}
+ :root select:not([multiple]):not([size]) option:disabled{color:var(--muted);background:#fff}
+}
+@media(forced-colors:active){:root select:not([multiple]):not([size]){appearance:auto;background-image:none;border:1px solid ButtonText}:root select:not([multiple]):not([size])::picker(select){appearance:auto}}
+@media(prefers-reduced-motion:reduce){:root select:not([multiple]):not([size]),:root select:not([multiple]):not([size])::picker-icon{transition:none}}

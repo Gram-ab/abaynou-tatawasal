@@ -1,3 +1,4 @@
+import {e2eAppOrigin,e2eMailpitOrigin} from '../../scripts/e2e-target';
 import {disposablePassword} from '../support/disposable-password';
 import {expect,fillPassword,expectPassword} from '../support/private-password-input';
 import {request as playwrightRequest,test,type APIRequestContext,type Browser,type Page} from '@playwright/test';
@@ -5,7 +6,7 @@ import {request as playwrightRequest,test,type APIRequestContext,type Browser,ty
 test.use({trace:'off',screenshot:'off',video:'off'});
 // Intentionally invalid nine-character input exercises rejection, never a valid account password.
 const invalidShortPassword=disposablePassword(9),wrongPassword=disposablePassword();
-const mailpit='http://127.0.0.1:54324';
+const mailpit=e2eMailpitOrigin;
 async function messages(request:APIRequestContext,address:string){
  const response=await request.get(`${mailpit}/api/v1/messages`),data=await response.json() as {messages?:Array<{ID:string;To?:Array<{Address:string}>}>};
  return data.messages?.filter(message=>message.To?.some(to=>to.Address.toLowerCase()===address.toLowerCase()))??[];
@@ -22,7 +23,7 @@ async function hasEmailLink(request:APIRequestContext,address:string,type:string
 }
 async function submit(page:Page){await page.locator('form').filter({has:page.locator('button[type="submit"]')}).last().locator('button[type="submit"]').click();}
 async function login(page:Page,email:string,password:string){await page.goto('/en/login');await page.getByLabel('Email address').fill(email);await fillPassword(page.locator('input[name="password"]'),password);await submit(page);}
-async function assertOldEmailWorks(browser:Browser,email:string,password:string){const context=await browser.newContext({baseURL:'http://127.0.0.1:3000'}),page=await context.newPage();await login(page,email,password);await expect(page).toHaveURL(/\/en\/citizen$/);await context.close();}
+async function assertOldEmailWorks(browser:Browser,email:string,password:string){const context=await browser.newContext({baseURL:e2eAppOrigin}),page=await context.newPage();await login(page,email,password);await expect(page).toHaveURL(/\/en\/citizen$/);await context.close();}
 
 test.describe.serial('Citizen identity and account access',()=>{
  test.setTimeout(90_000);

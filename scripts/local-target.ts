@@ -1,9 +1,11 @@
 import {execFileSync} from 'node:child_process';
 import {existsSync, readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
+import {e2eTarget} from './e2e-target';
 
 /** Admin tools only: never accept a caller-supplied database target. */
 export function localDatabaseUrl(): string {
+  if(process.env.ABAYNOU_E2E_TARGET!==undefined)return e2eTarget().adminDatabaseUrl;
   if (existsSync('supabase/.temp/project-ref')) throw new Error('STOP: linked project marker exists');
   const config = readFileSync('supabase/config.toml', 'utf8');
   if (!/^project_id = "Abaynou_Tatawasal"$/m.test(config)) throw new Error('STOP: unexpected local project');

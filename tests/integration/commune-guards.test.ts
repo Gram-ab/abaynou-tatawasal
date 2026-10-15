@@ -1,10 +1,12 @@
 import {beforeEach,describe,expect,it,vi} from 'vitest';
+const renderMemo=vi.hoisted(()=>new Map<unknown,Map<string,unknown>>());
+vi.mock('react',()=>({cache:(fn:(...args:unknown[])=>unknown)=>(...args:unknown[])=>{let entries=renderMemo.get(fn);if(!entries){entries=new Map();renderMemo.set(fn,entries);}const key=JSON.stringify(args);if(!entries.has(key))entries.set(key,fn(...args));return entries.get(key);}}));
 const mocks=vi.hoisted(()=>({resolve:vi.fn(),identity:vi.fn(),secret:vi.fn(),headers:vi.fn()}));
 vi.mock('server-only',()=>({}));vi.mock('next/headers',()=>({headers:mocks.headers}));vi.mock('next/navigation',()=>({redirect:(url:string)=>{throw new Error(`REDIRECT:${url}`);}}));
 vi.mock('@/server/auth/provider',()=>({verifiedProviderIdentity:mocks.identity}));vi.mock('@/server/sessions/cookie',()=>({readSessionSecret:mocks.secret,digestSessionSecret:()=>Buffer.alloc(32)}));vi.mock('@/server/identity/repository',()=>({resolveUserSession:mocks.resolve}));
 import {currentApplicationUser,requireCitizen,requireCommuneStaff,requireAdmin,redirectAuthenticatedUser} from '../../src/server/auth/application-user';
 const row={state:'VALID',role:'AGENT',session_id:'s',profile_id:'p',full_name:'Agent',preferred_language:'en',profile_revision:1,absolute_expires_at:'2026-09-22T22:00:00Z'};
-beforeEach(()=>{vi.resetAllMocks();mocks.identity.mockResolvedValue({authUserId:'a',providerSessionId:'s',email:'local@example.test'});mocks.secret.mockResolvedValue('secret');mocks.headers.mockResolvedValue(new Headers());mocks.resolve.mockResolvedValue(row);});
+beforeEach(()=>{renderMemo.clear();vi.resetAllMocks();mocks.identity.mockResolvedValue({authUserId:'a',providerSessionId:'s',email:'local@example.test'});mocks.secret.mockResolvedValue('secret');mocks.headers.mockResolvedValue(new Headers());mocks.resolve.mockResolvedValue(row);});
 describe('independent server-side role boundaries',()=>{
  it('does not accept provider authentication without application cookie',async()=>{mocks.secret.mockResolvedValue(null);await expect(requireCommuneStaff('en')).rejects.toThrow('REDIRECT:/en/commune/login');expect(mocks.resolve).not.toHaveBeenCalled();});
  it('does not accept a cookie without verified provider identity',async()=>{mocks.identity.mockResolvedValue(null);expect(await currentApplicationUser()).toBeNull();});
@@ -24,4 +26,24 @@ describe('authenticated entry redirects',()=>{
  it('leaves anonymous visitors on the login page',async()=>{mocks.secret.mockResolvedValue(null);await expect(redirectAuthenticatedUser('ar')).resolves.toBeUndefined();expect(mocks.identity).not.toHaveBeenCalled();});
  it('does not trust provider identity without an application session',async()=>{mocks.resolve.mockResolvedValue(null);await expect(redirectAuthenticatedUser('en')).resolves.toBeUndefined();});
  it('fails closed if session verification fails',async()=>{mocks.resolve.mockRejectedValue(new Error('Database unavailable'));await expect(redirectAuthenticatedUser('en')).rejects.toThrow('Database unavailable');});
+});
+
+describe('request-only session deduplication',()=>{
+ it('deduplicates passive render checks but retains a separate meaningful activity check',async()=>{
+  await Promise.all([currentApplicationUser(false),currentApplicationUser(false),requireCommuneStaff('en')]);
+  expect(mocks.resolve).toHaveBeenCalledTimes(1);
+  await requireCommuneStaff('en',true);expect(mocks.resolve).toHaveBeenCalledTimes(2);
+  expect(mocks.resolve.mock.calls.map(call=>call[3])).toEqual([false,true]);
+ });
+ it('never reuses security state during mutation actions',async()=>{
+  mocks.headers.mockResolvedValue(new Headers({'next-action':'action'}));
+  expect((await currentApplicationUser())?.state).toBe('VALID');
+  mocks.resolve.mockResolvedValue({...row,state:'REVOKED'});
+  expect((await currentApplicationUser())?.state).toBe('REVOKED');
+  expect(mocks.resolve).toHaveBeenCalledTimes(2);
+ });
+ it('a subsequent request rechecks revocation instead of retaining the previous render',async()=>{
+  await currentApplicationUser();renderMemo.clear();mocks.resolve.mockResolvedValue({...row,state:'REVOKED'});
+  expect((await currentApplicationUser())?.state).toBe('REVOKED');expect(mocks.resolve).toHaveBeenCalledTimes(2);
+ });
 });

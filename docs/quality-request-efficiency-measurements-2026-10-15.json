@@ -1,0 +1,804 @@
+{
+  "timestamp": "2026-10-15T15:22:41.524Z",
+  "environment": "Disposable local Supabase; production Next.js build",
+  "host": {
+    "logicalCpus": 4,
+    "memoryGiB": 16
+  },
+  "limitations": [
+    "Loopback/local hardware is not hosted Supabase Nano compute.",
+    "JSON result bytes exclude protocol/TLS/Auth overhead and are not metered egress.",
+    "Synthetic record growth does not establish a production retention forecast."
+  ],
+  "storageBaseline": {
+    "databaseBytes": 14093459,
+    "applicationBytes": 1286144,
+    "complaints": 10,
+    "tables": [
+      {
+        "name": "complaints",
+        "bytes": 163840
+      },
+      {
+        "name": "notifications",
+        "bytes": 98304
+      },
+      {
+        "name": "email_outbox",
+        "bytes": 81920
+      },
+      {
+        "name": "audit_events",
+        "bytes": 81920
+      },
+      {
+        "name": "legal_acknowledgements",
+        "bytes": 81920
+      },
+      {
+        "name": "public_page_translations",
+        "bytes": 81920
+      },
+      {
+        "name": "application_sessions",
+        "bytes": 81920
+      },
+      {
+        "name": "command_receipts",
+        "bytes": 81920
+      },
+      {
+        "name": "complaint_events",
+        "bytes": 65536
+      },
+      {
+        "name": "public_page_versions",
+        "bytes": 57344
+      },
+      {
+        "name": "locations",
+        "bytes": 49152
+      },
+      {
+        "name": "commune_settings",
+        "bytes": 49152
+      },
+      {
+        "name": "application_profiles",
+        "bytes": 49152
+      },
+      {
+        "name": "categories",
+        "bytes": 49152
+      },
+      {
+        "name": "public_pages",
+        "bytes": 49152
+      },
+      {
+        "name": "response_versions",
+        "bytes": 40960
+      },
+      {
+        "name": "location_translations",
+        "bytes": 32768
+      },
+      {
+        "name": "commune_settings_translations",
+        "bytes": 32768
+      },
+      {
+        "name": "category_translations",
+        "bytes": 32768
+      },
+      {
+        "name": "notification_state",
+        "bytes": 24576
+      }
+    ]
+  },
+  "storage": [
+    {
+      "syntheticComplaints": 1000,
+      "databaseBytes": 20450451,
+      "applicationBytes": 7553024,
+      "complaints": 1010,
+      "tables": [
+        {
+          "name": "notifications",
+          "bytes": 2932736
+        },
+        {
+          "name": "complaints",
+          "bytes": 2048000
+        },
+        {
+          "name": "audit_events",
+          "bytes": 499712
+        },
+        {
+          "name": "command_receipts",
+          "bytes": 475136
+        },
+        {
+          "name": "email_outbox",
+          "bytes": 376832
+        },
+        {
+          "name": "complaint_events",
+          "bytes": 344064
+        },
+        {
+          "name": "legal_acknowledgements",
+          "bytes": 139264
+        },
+        {
+          "name": "application_sessions",
+          "bytes": 122880
+        },
+        {
+          "name": "application_profiles",
+          "bytes": 81920
+        },
+        {
+          "name": "public_page_translations",
+          "bytes": 81920
+        },
+        {
+          "name": "public_page_versions",
+          "bytes": 57344
+        },
+        {
+          "name": "notification_state",
+          "bytes": 57344
+        },
+        {
+          "name": "locations",
+          "bytes": 49152
+        },
+        {
+          "name": "commune_settings",
+          "bytes": 49152
+        },
+        {
+          "name": "categories",
+          "bytes": 49152
+        },
+        {
+          "name": "public_pages",
+          "bytes": 49152
+        },
+        {
+          "name": "response_versions",
+          "bytes": 40960
+        },
+        {
+          "name": "location_translations",
+          "bytes": 32768
+        },
+        {
+          "name": "category_translations",
+          "bytes": 32768
+        },
+        {
+          "name": "commune_settings_translations",
+          "bytes": 32768
+        }
+      ],
+      "incrementalApplicationBytes": 6266880,
+      "bytesPerSubmittedComplaint": 6266.88
+    },
+    {
+      "syntheticComplaints": 10000,
+      "databaseBytes": 76278931,
+      "applicationBytes": 62472192,
+      "complaints": 10010,
+      "tables": [
+        {
+          "name": "notifications",
+          "bytes": 28033024
+        },
+        {
+          "name": "complaints",
+          "bytes": 19283968
+        },
+        {
+          "name": "audit_events",
+          "bytes": 3940352
+        },
+        {
+          "name": "command_receipts",
+          "bytes": 3858432
+        },
+        {
+          "name": "email_outbox",
+          "bytes": 2818048
+        },
+        {
+          "name": "complaint_events",
+          "bytes": 2498560
+        },
+        {
+          "name": "legal_acknowledgements",
+          "bytes": 622592
+        },
+        {
+          "name": "application_sessions",
+          "bytes": 466944
+        },
+        {
+          "name": "application_profiles",
+          "bytes": 294912
+        },
+        {
+          "name": "notification_state",
+          "bytes": 180224
+        },
+        {
+          "name": "public_page_translations",
+          "bytes": 81920
+        },
+        {
+          "name": "public_page_versions",
+          "bytes": 57344
+        },
+        {
+          "name": "locations",
+          "bytes": 49152
+        },
+        {
+          "name": "commune_settings",
+          "bytes": 49152
+        },
+        {
+          "name": "categories",
+          "bytes": 49152
+        },
+        {
+          "name": "public_pages",
+          "bytes": 49152
+        },
+        {
+          "name": "response_versions",
+          "bytes": 40960
+        },
+        {
+          "name": "location_translations",
+          "bytes": 32768
+        },
+        {
+          "name": "category_translations",
+          "bytes": 32768
+        },
+        {
+          "name": "commune_settings_translations",
+          "bytes": 32768
+        }
+      ],
+      "incrementalApplicationBytes": 61186048,
+      "bytesPerSubmittedComplaint": 6118.6048
+    }
+  ],
+  "databaseTimings": [
+    {
+      "syntheticComplaints": 1000,
+      "name": "Citizen list (20)",
+      "samples": 30,
+      "p50ms": 3.77,
+      "p95ms": 5.75,
+      "maxMs": 6.01,
+      "jsonPayloadBytes": 3581
+    },
+    {
+      "syntheticComplaints": 1000,
+      "name": "Commune page 1",
+      "samples": 30,
+      "p50ms": 9.25,
+      "p95ms": 17.69,
+      "maxMs": 46.82,
+      "jsonPayloadBytes": 8431
+    },
+    {
+      "syntheticComplaints": 1000,
+      "name": "Commune deep page",
+      "samples": 30,
+      "p50ms": 9.2,
+      "p95ms": 11.12,
+      "maxMs": 17.34,
+      "jsonPayloadBytes": 8377
+    },
+    {
+      "syntheticComplaints": 1000,
+      "name": "Commune selective search",
+      "samples": 30,
+      "p50ms": 10.87,
+      "p95ms": 11.92,
+      "maxMs": 27.08,
+      "jsonPayloadBytes": 4150
+    },
+    {
+      "syntheticComplaints": 1000,
+      "name": "Commune Arabic search",
+      "samples": 30,
+      "p50ms": 13.09,
+      "p95ms": 28.62,
+      "maxMs": 32.8,
+      "jsonPayloadBytes": 8434
+    },
+    {
+      "syntheticComplaints": 1000,
+      "name": "Dashboard counts",
+      "samples": 30,
+      "p50ms": 7.69,
+      "p95ms": 16.29,
+      "maxMs": 17.12,
+      "jsonPayloadBytes": 112
+    },
+    {
+      "syntheticComplaints": 1000,
+      "name": "Staff unread summary",
+      "samples": 30,
+      "p50ms": 5.08,
+      "p95ms": 13.44,
+      "maxMs": 13.76,
+      "jsonPayloadBytes": 73
+    },
+    {
+      "syntheticComplaints": 10000,
+      "name": "Citizen list (20)",
+      "samples": 30,
+      "p50ms": 4.49,
+      "p95ms": 6.7,
+      "maxMs": 10.68,
+      "jsonPayloadBytes": 3581
+    },
+    {
+      "syntheticComplaints": 10000,
+      "name": "Commune page 1",
+      "samples": 30,
+      "p50ms": 78.23,
+      "p95ms": 189.27,
+      "maxMs": 209.77,
+      "jsonPayloadBytes": 8494
+    },
+    {
+      "syntheticComplaints": 10000,
+      "name": "Commune deep page",
+      "samples": 30,
+      "p50ms": 66.17,
+      "p95ms": 135.54,
+      "maxMs": 137.23,
+      "jsonPayloadBytes": 8397
+    },
+    {
+      "syntheticComplaints": 10000,
+      "name": "Commune selective search",
+      "samples": 30,
+      "p50ms": 59.68,
+      "p95ms": 118.63,
+      "maxMs": 134.29,
+      "jsonPayloadBytes": 8402
+    },
+    {
+      "syntheticComplaints": 10000,
+      "name": "Commune Arabic search",
+      "samples": 30,
+      "p50ms": 109.67,
+      "p95ms": 156.26,
+      "maxMs": 164.98,
+      "jsonPayloadBytes": 8489
+    },
+    {
+      "syntheticComplaints": 10000,
+      "name": "Dashboard counts",
+      "samples": 30,
+      "p50ms": 25.02,
+      "p95ms": 40.64,
+      "maxMs": 49.07,
+      "jsonPayloadBytes": 113
+    },
+    {
+      "syntheticComplaints": 10000,
+      "name": "Staff unread summary",
+      "samples": 30,
+      "p50ms": 26.11,
+      "p95ms": 54.9,
+      "maxMs": 66.37,
+      "jsonPayloadBytes": 76
+    }
+  ],
+  "authBoundaryChecks": {
+    "passed": 5,
+    "failed": 0
+  },
+  "queryPlans": [
+    {
+      "search": "unfiltered",
+      "executionMs": 142.271,
+      "planningMs": 1.053,
+      "plan": {
+        "Node Type": "Limit",
+        "Actual Total Time": 141.593,
+        "Actual Rows": 20,
+        "Actual Loops": 1,
+        "Shared Hit Blocks": 1692,
+        "Shared Read Blocks": 0,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Actual Total Time": 141.587,
+            "Actual Rows": 20,
+            "Actual Loops": 1,
+            "Sort Method": "top-N heapsort",
+            "Sort Space Used": 45,
+            "Shared Hit Blocks": 1692,
+            "Shared Read Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "WindowAgg",
+                "Actual Total Time": 118.636,
+                "Actual Rows": 10010,
+                "Actual Loops": 1,
+                "Shared Hit Blocks": 1686,
+                "Shared Read Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Hash Join",
+                    "Actual Total Time": 86.589,
+                    "Actual Rows": 10010,
+                    "Actual Loops": 1,
+                    "Shared Hit Blocks": 1686,
+                    "Shared Read Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Relation Name": "complaints",
+                        "Actual Total Time": 76.385,
+                        "Actual Rows": 10010,
+                        "Actual Loops": 1,
+                        "Rows Removed by Filter": 0,
+                        "Shared Hit Blocks": 1668,
+                        "Shared Read Blocks": 0
+                      },
+                      {
+                        "Node Type": "Hash",
+                        "Actual Total Time": 0.494,
+                        "Actual Rows": 1015,
+                        "Actual Loops": 1,
+                        "Shared Hit Blocks": 18,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Seq Scan",
+                            "Relation Name": "application_profiles",
+                            "Actual Total Time": 0.261,
+                            "Actual Rows": 1015,
+                            "Actual Loops": 1,
+                            "Shared Hit Blocks": 18,
+                            "Shared Read Blocks": 0
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "search": "needle",
+      "executionMs": 162.192,
+      "planningMs": 1.124,
+      "plan": {
+        "Node Type": "Limit",
+        "Actual Total Time": 162.067,
+        "Actual Rows": 20,
+        "Actual Loops": 1,
+        "Shared Hit Blocks": 1686,
+        "Shared Read Blocks": 0,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Actual Total Time": 162.062,
+            "Actual Rows": 20,
+            "Actual Loops": 1,
+            "Sort Method": "top-N heapsort",
+            "Sort Space Used": 45,
+            "Shared Hit Blocks": 1686,
+            "Shared Read Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "WindowAgg",
+                "Actual Total Time": 161.967,
+                "Actual Rows": 100,
+                "Actual Loops": 1,
+                "Shared Hit Blocks": 1686,
+                "Shared Read Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Hash Join",
+                    "Actual Total Time": 161.217,
+                    "Actual Rows": 100,
+                    "Actual Loops": 1,
+                    "Shared Hit Blocks": 1686,
+                    "Shared Read Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Relation Name": "complaints",
+                        "Actual Total Time": 39.343,
+                        "Actual Rows": 10010,
+                        "Actual Loops": 1,
+                        "Rows Removed by Filter": 0,
+                        "Shared Hit Blocks": 1668,
+                        "Shared Read Blocks": 0
+                      },
+                      {
+                        "Node Type": "Hash",
+                        "Actual Total Time": 0.58,
+                        "Actual Rows": 1015,
+                        "Actual Loops": 1,
+                        "Shared Hit Blocks": 18,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Seq Scan",
+                            "Relation Name": "application_profiles",
+                            "Actual Total Time": 0.275,
+                            "Actual Rows": 1015,
+                            "Actual Loops": 1,
+                            "Shared Hit Blocks": 18,
+                            "Shared Read Blocks": 0
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "search": "قياس",
+      "executionMs": 135.264,
+      "planningMs": 0.589,
+      "plan": {
+        "Node Type": "Limit",
+        "Actual Total Time": 135.165,
+        "Actual Rows": 20,
+        "Actual Loops": 1,
+        "Shared Hit Blocks": 1686,
+        "Shared Read Blocks": 0,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Actual Total Time": 135.161,
+            "Actual Rows": 20,
+            "Actual Loops": 1,
+            "Sort Method": "top-N heapsort",
+            "Sort Space Used": 45,
+            "Shared Hit Blocks": 1686,
+            "Shared Read Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "WindowAgg",
+                "Actual Total Time": 132.251,
+                "Actual Rows": 3300,
+                "Actual Loops": 1,
+                "Shared Hit Blocks": 1686,
+                "Shared Read Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Hash Join",
+                    "Actual Total Time": 121.537,
+                    "Actual Rows": 3300,
+                    "Actual Loops": 1,
+                    "Shared Hit Blocks": 1686,
+                    "Shared Read Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Relation Name": "complaints",
+                        "Actual Total Time": 28.448,
+                        "Actual Rows": 10010,
+                        "Actual Loops": 1,
+                        "Rows Removed by Filter": 0,
+                        "Shared Hit Blocks": 1668,
+                        "Shared Read Blocks": 0
+                      },
+                      {
+                        "Node Type": "Hash",
+                        "Actual Total Time": 1.259,
+                        "Actual Rows": 1015,
+                        "Actual Loops": 1,
+                        "Shared Hit Blocks": 18,
+                        "Shared Read Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Seq Scan",
+                            "Relation Name": "application_profiles",
+                            "Actual Total Time": 0.66,
+                            "Actual Rows": 1015,
+                            "Actual Loops": 1,
+                            "Shared Hit Blocks": 18,
+                            "Shared Read Blocks": 0
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "lifecycleStorage": {
+    "samples": 100,
+    "additionalApplicationBytes": 1015808,
+    "additionalBytesPerCompletedComplaint": 10158.08
+  },
+  "navigation": [
+    {
+      "case": "Admin GET filter preserves document",
+      "passed": true
+    },
+    {
+      "case": "ar Citizen section preserves document",
+      "passed": true
+    },
+    {
+      "case": "fr Citizen section preserves document",
+      "passed": true
+    },
+    {
+      "case": "en Citizen section preserves document",
+      "passed": true
+    }
+  ],
+  "httpCapacity": [
+    {
+      "concurrency": 1,
+      "requests": 5,
+      "samples": 5,
+      "p50ms": 285.08,
+      "p95ms": 520.74,
+      "maxMs": 520.74,
+      "errors": 0,
+      "throughputRequestsPerSecond": 2.7603461915779213,
+      "peakWebDatabaseConnections": 2,
+      "appHtmlBytes": 288380
+    },
+    {
+      "concurrency": 5,
+      "requests": 25,
+      "samples": 25,
+      "p50ms": 773.12,
+      "p95ms": 1180.11,
+      "maxMs": 1293.59,
+      "errors": 0,
+      "throughputRequestsPerSecond": 5.8489071012938005,
+      "peakWebDatabaseConnections": 5,
+      "appHtmlBytes": 1442760
+    },
+    {
+      "concurrency": 10,
+      "requests": 50,
+      "samples": 50,
+      "p50ms": 1152.3,
+      "p95ms": 1450.79,
+      "maxMs": 1538.91,
+      "errors": 0,
+      "throughputRequestsPerSecond": 8.223028937907877,
+      "peakWebDatabaseConnections": 5,
+      "appHtmlBytes": 2885600
+    },
+    {
+      "concurrency": 20,
+      "requests": 100,
+      "samples": 100,
+      "p50ms": 2471.34,
+      "p95ms": 3397.15,
+      "maxMs": 3904.01,
+      "errors": 0,
+      "throughputRequestsPerSecond": 8.048527080911262,
+      "peakWebDatabaseConnections": 5,
+      "appHtmlBytes": 5777560
+    }
+  ],
+  "finalStorage": {
+    "databaseBytes": 77483155,
+    "applicationBytes": 63496192,
+    "complaints": 10010,
+    "tables": [
+      {
+        "name": "notifications",
+        "bytes": 28205056
+      },
+      {
+        "name": "complaints",
+        "bytes": 19529728
+      },
+      {
+        "name": "command_receipts",
+        "bytes": 4063232
+      },
+      {
+        "name": "audit_events",
+        "bytes": 4030464
+      },
+      {
+        "name": "email_outbox",
+        "bytes": 2899968
+      },
+      {
+        "name": "complaint_events",
+        "bytes": 2646016
+      },
+      {
+        "name": "legal_acknowledgements",
+        "bytes": 622592
+      },
+      {
+        "name": "application_sessions",
+        "bytes": 475136
+      },
+      {
+        "name": "application_profiles",
+        "bytes": 294912
+      },
+      {
+        "name": "notification_state",
+        "bytes": 180224
+      },
+      {
+        "name": "response_versions",
+        "bytes": 114688
+      },
+      {
+        "name": "public_page_translations",
+        "bytes": 81920
+      },
+      {
+        "name": "public_page_versions",
+        "bytes": 57344
+      },
+      {
+        "name": "categories",
+        "bytes": 49152
+      },
+      {
+        "name": "public_pages",
+        "bytes": 49152
+      },
+      {
+        "name": "locations",
+        "bytes": 49152
+      },
+      {
+        "name": "commune_settings",
+        "bytes": 49152
+      },
+      {
+        "name": "category_translations",
+        "bytes": 32768
+      },
+      {
+        "name": "location_translations",
+        "bytes": 32768
+      },
+      {
+        "name": "commune_settings_translations",
+        "bytes": 32768
+      }
+    ]
+  }
+}

@@ -1,5 +1,6 @@
 import {describe,it,expect,vi,beforeEach} from 'vitest';
 vi.mock('server-only',()=>({}));
+vi.mock('next/cache',()=>({unstable_cache:(fn:unknown)=>fn}));
 const {query}=vi.hoisted(()=>({query:vi.fn()}));
 vi.mock('@/shared/db/public',()=>({publicDatabase:()=>query}));
 import {readPage,readSettings} from '../../src/features/public-content/repository';

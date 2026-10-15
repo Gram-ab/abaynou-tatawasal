@@ -7,7 +7,7 @@ type PendingSignup={email:string;expires:number};
 
 export async function storePendingSignup(email:string){
  const store=await cookies();
- store.set(COOKIE,sealData({email,expires:Date.now()+24*60*60_000}),{httpOnly:true,sameSite:'lax',secure:process.env.APP_ENV!=='local',path:'/',maxAge:86400});
+ store.set(COOKIE,sealData({email,expires:Date.now()+24*60*60_000}),{httpOnly:true,sameSite:'lax',secure:!['local','e2e'].includes(process.env.APP_ENV??''),path:'/',maxAge:86400});
 }
 export async function readPendingSignup(){return openData<PendingSignup>((await cookies()).get(COOKIE)?.value);}
 export async function clearPendingSignup(){(await cookies()).delete(COOKIE);}

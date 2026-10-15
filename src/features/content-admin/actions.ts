@@ -1,5 +1,6 @@
 'use server';
-import {revalidatePath} from 'next/cache';
+import {revalidatePath,updateTag} from 'next/cache';
+import {publicPagesTag,publicSettingsTag} from '@/features/public-content/cache-tags';
 import {requireAdmin} from '@/server/auth/application-user';
 import {contentAdminFingerprint} from '@/server/content-admin/fingerprint';
 import {publishAdminPage,updateAdminSettings} from '@/server/content-admin/repository';
@@ -13,6 +14,7 @@ export async function publishPageAction(_:ContentAdminState,form:FormData):Promi
  const value=parsed.data,actor=await requireAdmin(value.locale),canonical={key:value.pageKey,revision:value.revision,bundle:value.bundle};
  try{await publishAdminPage(actor,{key:value.pageKey,revision:value.revision,commandKey:value.commandKey,fingerprint:contentAdminFingerprint('PUBLIC_CONTENT_PUBLISH',canonical),bundle:value.bundle});}
  catch(error){return fail(errorCode(error));}
+ updateTag(publicPagesTag);
  for(const language of ['ar','fr','en'] as const){const route=pageRoutes[value.pageKey];revalidatePath(`/${language}${route?`/${route}`:''}`);if(['HOME','HOW_IT_WORKS','SERVICE_SCOPE'].includes(value.pageKey))revalidatePath(`/${language}`);}
  revalidatePath(`/${value.locale}/commune/settings/pages`);revalidatePath(`/${value.locale}/commune/settings/pages/${value.pageKey}`);
  return {status:'success',code:'success'};
@@ -23,6 +25,7 @@ export async function updateSettingsAction(_:ContentAdminState,form:FormData):Pr
  const value=parsed.data,actor=await requireAdmin(value.locale),canonical={revision:value.revision,phone:value.contactPhone,email:value.contactEmail,chikayaUrl:value.chikayaUrl,bundle:value.bundle};
  try{await updateAdminSettings(actor,{revision:value.revision,commandKey:value.commandKey,fingerprint:contentAdminFingerprint('COMMUNE_SETTINGS_UPDATE',canonical),phone:value.contactPhone,email:value.contactEmail,chikayaUrl:value.chikayaUrl,bundle:value.bundle});}
  catch(error){const code=errorCode(error);return fail(code==='invalid'?'settingsInvalid':code);}
+ updateTag(publicSettingsTag);
  for(const language of ['ar','fr','en'] as const)revalidatePath(`/${language}`,'layout');
  revalidatePath(`/${value.locale}/commune/settings/commune`);
  return {status:'success',code:'settingsSuccess'};

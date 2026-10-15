@@ -1,5 +1,6 @@
 import 'server-only';
 import {authEvent} from './telemetry';
+import {cache} from 'react';
 import {headers} from 'next/headers';
 import {redirect} from 'next/navigation';
 import {verifiedProviderIdentity} from './provider';
@@ -8,15 +9,19 @@ import {resolveUserSession} from '@/server/identity/repository';
 import {isStaff} from '@/features/commune-auth/model';
 import {safeReturnTo} from '@/features/auth/model';
 export type ApplicationUser={state:string;role:'CITIZEN'|'AGENT'|'ADMIN';authUserId:string;email:string;providerSessionId:string;sessionId:string;profileId:string;fullName:string;phone:string|null;language:'ar'|'fr'|'en';revision:number;absoluteExpiresAt:string;secret:string;digest:Buffer};
-export async function currentApplicationUser(activity=false):Promise<ApplicationUser|null>{
+async function resolveCurrentApplicationUser(activity:boolean):Promise<ApplicationUser|null>{
  const secret=await readSessionSecret();if(!secret)return null;
  const identity=await verifiedProviderIdentity();if(!identity)return null;
  const h=await headers();const meaningful=activity&&!h.has('next-router-prefetch')&&!['prefetch','prerender'].includes(h.get('purpose')??'')&&!h.get('sec-purpose')?.includes('prefetch');
  const digest=digestSessionSecret(secret),row=await resolveUserSession(identity.authUserId,identity.providerSessionId,digest,meaningful);if(!row)return null;
  return {state:row.state,role:row.role,authUserId:identity.authUserId,email:identity.email,providerSessionId:identity.providerSessionId,sessionId:row.session_id,profileId:row.profile_id,fullName:row.full_name,phone:row.contact_phone,language:row.preferred_language,revision:Number(row.profile_revision),absoluteExpiresAt:row.absolute_expires_at,secret,digest};
 }
-export async function requireAuthenticatedApplicationUser(locale:string,area:'citizen'|'commune',activity=false){
- const user=await currentApplicationUser(false);
+const cachedApplicationUser=cache(resolveCurrentApplicationUser);
+export async function currentApplicationUser(activity=false):Promise<ApplicationUser|null>{
+ // RSC-only memoization. Mutations always re-read security state; nothing is cached across requests.
+ return (await headers()).has('next-action')?resolveCurrentApplicationUser(activity):cachedApplicationUser(activity);
+}
+async function authorizeApplicationUser(user:ApplicationUser|null,locale:string,area:'citizen'|'commune'){
  if(!user){if(area==='commune'&&await readSessionSecret())redirect(`/${locale}/commune/auth/end-session`);redirect(area==='commune'?`/${locale}/commune/login`:`/${locale}/login?reason=authentication-required`);}
  if(area==='commune'&&user.role==='CITIZEN'){authEvent('role_denied');redirect(`/${locale}/commune/access-denied`);}
  if(area==='citizen'&&isStaff(user.role))redirect(`/${locale}/commune`);
@@ -24,8 +29,11 @@ export async function requireAuthenticatedApplicationUser(locale:string,area:'ci
   if(area==='commune'){authEvent(user.state==='DISABLED'?'staff_disabled':'staff_session_ended');redirect(`/${locale}/commune/auth/end-session`);}
   redirect(`/${locale}/${user.state==='DISABLED'?'account-disabled':user.state==='INCOMPLETE'?'complete-registration':'session-expired'}`);
  }
- if(activity){const renewed=await currentApplicationUser(true);if(!renewed||renewed.state!=='VALID'||renewed.role!==user.role)return requireAuthenticatedApplicationUser(locale,area,false);return renewed;}
  return user;
+}
+export async function requireAuthenticatedApplicationUser(locale:string,area:'citizen'|'commune',activity=false){
+ const user=await authorizeApplicationUser(await currentApplicationUser(false),locale,area);
+ return activity?authorizeApplicationUser(await currentApplicationUser(true),locale,area):user;
 }
 export const requireCitizen=(locale:string,activity=false)=>requireAuthenticatedApplicationUser(locale,'citizen',activity);
 // Entry-page convenience only: protected pages/actions still authorize independently.

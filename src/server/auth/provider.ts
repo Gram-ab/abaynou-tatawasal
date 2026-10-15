@@ -8,6 +8,7 @@ function configuration(){
  const url=process.env.SUPABASE_URL,key=process.env.SUPABASE_PUBLISHABLE_KEY;
  if(!url||!key)throw new Error('Authentication configuration unavailable');
  if(process.env.APP_ENV==='local'&&!/^http:\/\/(127\.0\.0\.1|localhost):54321\/?$/.test(url))throw new Error('Local Auth must use the local Supabase API');
+ if(process.env.APP_ENV==='e2e'&&!/^http:\/\/(127\.0\.0\.1|localhost):55321\/?$/.test(url))throw new Error('E2E Auth must use the disposable Supabase API');
  return {url,key};
 }
 
@@ -15,8 +16,8 @@ export async function providerClient(){
  const {url,key}=configuration();const store=await cookies();
  return createServerClient(url,key,{
   auth:{flowType:'pkce',persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'abaynou-provider'},
-  cookieOptions:{path:'/',sameSite:'lax',secure:process.env.APP_ENV!=='local',httpOnly:true},
-  cookies:{getAll:()=>store.getAll(),setAll(values){for(const {name,value,options} of values){try{store.set(name,value,{...options,httpOnly:true,sameSite:'lax',secure:process.env.APP_ENV!=='local',path:'/'});}catch{/* Read-only Server Component; Route Handlers/Actions perform refresh writes. */}}}}
+  cookieOptions:{path:'/',sameSite:'lax',secure:!['local','e2e'].includes(process.env.APP_ENV??''),httpOnly:true},
+  cookies:{getAll:()=>store.getAll(),setAll(values){for(const {name,value,options} of values){try{store.set(name,value,{...options,httpOnly:true,sameSite:'lax',secure:!['local','e2e'].includes(process.env.APP_ENV??''),path:'/'});}catch{/* Read-only Server Component; Route Handlers/Actions perform refresh writes. */}}}}
  });
 }
 

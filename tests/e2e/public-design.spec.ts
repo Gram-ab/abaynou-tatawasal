@@ -30,7 +30,7 @@ test('homepage regions, assets and dimensions follow handoff',async({page})=>{
  expect(await page.locator('main>section').evaluateAll(els=>els.map(e=>e.className))).toEqual(['public-hero','principles','how','home-scope','follow-up','home-help']);
  expect((await page.locator('.head').boundingBox())?.width).toBe(1240);expect((await page.locator('.actions .btn').first().boundingBox())?.height).toBe(46);
  expect(await page.locator('.chikaya').evaluate(e=>e.nextElementSibling?.tagName)).toBe('FOOTER');
- await expect(page.locator('.hero-illustration')).toHaveAttribute('src','/assets/abaynou-architecture-transparent.webp');
+ await expect(page.locator('.hero-illustration')).toHaveAttribute('src',/moroccan-commune-building-emblem\.png/);
  expect(await page.locator('.hero-illustration').evaluate(e=>getComputedStyle(e).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
  await page.goto('/ar/how-it-works');await expect(page.locator('.info-page')).toBeVisible();expect((await page.locator('.info-page').boundingBox())?.width).toBe(1160);await expect(page.locator('.process-list article')).toHaveCount(5);
  await page.goto('/ar/faq');await expect(page.locator('.faq details')).toHaveCount(12);

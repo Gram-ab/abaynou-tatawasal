@@ -1,0 +1,138 @@
+{
+  "complaints": 10010,
+  "samplesPerCase": 30,
+  "assertionsPassed": 14,
+  "failures": 0,
+  "results": [
+    {
+      "name": "Commune page 1",
+      "rows": 20,
+      "total": 10010,
+      "before": {
+        "p50ms": 83.07,
+        "p95ms": 172.17
+      },
+      "after": {
+        "p50ms": 34.91,
+        "p95ms": 62.25
+      }
+    },
+    {
+      "name": "Commune deep page",
+      "rows": 20,
+      "total": 10010,
+      "before": {
+        "p50ms": 95.75,
+        "p95ms": 147.84
+      },
+      "after": {
+        "p50ms": 60.36,
+        "p95ms": 133.94
+      }
+    },
+    {
+      "name": "Selective substring",
+      "rows": 20,
+      "total": 100,
+      "before": {
+        "p50ms": 69.18,
+        "p95ms": 243.01
+      },
+      "after": {
+        "p50ms": 54.99,
+        "p95ms": 237.89
+      }
+    },
+    {
+      "name": "Arabic substring",
+      "rows": 20,
+      "total": 3300,
+      "before": {
+        "p50ms": 399.2,
+        "p95ms": 813.15
+      },
+      "after": {
+        "p50ms": 322.58,
+        "p95ms": 719.83
+      }
+    },
+    {
+      "name": "Citizen name",
+      "rows": 20,
+      "total": 110,
+      "before": {
+        "p50ms": 229.75,
+        "p95ms": 417.46
+      },
+      "after": {
+        "p50ms": 156.8,
+        "p95ms": 312.94
+      }
+    },
+    {
+      "name": "Status + location",
+      "rows": 20,
+      "total": 1657,
+      "before": {
+        "p50ms": 39.7,
+        "p95ms": 134.23
+      },
+      "after": {
+        "p50ms": 44.49,
+        "p95ms": 69.72
+      }
+    },
+    {
+      "name": "Wildcard search",
+      "rows": 20,
+      "total": 10010,
+      "before": {
+        "p50ms": 114.21,
+        "p95ms": 215.46
+      },
+      "after": {
+        "p50ms": 85.8,
+        "p95ms": 217.11
+      }
+    },
+    {
+      "name": "No matches",
+      "rows": 0,
+      "total": 0,
+      "before": {
+        "p50ms": 111.07,
+        "p95ms": 702.17
+      },
+      "after": {
+        "p50ms": 67.18,
+        "p95ms": 540.96
+      }
+    },
+    {
+      "name": "Out of range",
+      "rows": 0,
+      "total": 0,
+      "before": {
+        "p50ms": 123.76,
+        "p95ms": 453.54
+      },
+      "after": {
+        "p50ms": 55.78,
+        "p95ms": 201.46
+      }
+    },
+    {
+      "name": "Blank query",
+      "rows": 20,
+      "total": 100,
+      "before": {
+        "p50ms": 23.9,
+        "p95ms": 71.53
+      },
+      "after": {
+        "p50ms": 33.34,
+        "p95ms": 83.23
+      }
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import {e2eAppOrigin,e2eMailpitOrigin} from '../../scripts/e2e-target';
 import {test,type APIRequestContext,type Page} from '@playwright/test';
 import {expect,fillPassword} from '../support/private-password-input';
 import {disposablePassword} from '../support/disposable-password';
@@ -8,10 +9,10 @@ test.use({trace:'off',screenshot:'off',video:'off'});
 const email=`complaint-${Date.now()}@example.test`,password=disposablePassword();
 async function verifyLink(request:APIRequestContext){
  for(let attempt=0;attempt<30;attempt++){
-  const data=await (await request.get('http://127.0.0.1:54324/api/v1/messages')).json();
+  const data=await (await request.get(`${e2eMailpitOrigin}/api/v1/messages`)).json();
   for(const item of data.messages??[]){
    if(!item.To?.some((to:{Address:string})=>to.Address===email))continue;
-   const mail=await (await request.get(`http://127.0.0.1:54324/api/v1/message/${item.ID}`)).json();
+   const mail=await (await request.get(`${e2eMailpitOrigin}/api/v1/message/${item.ID}`)).json();
    const link=(mail.HTML??'').replaceAll('&amp;','&').match(/href=["']([^"']+type=signup[^"']*)["']/)?.[1];if(link)return link;
   }
   await new Promise(resolve=>setTimeout(resolve,300));
@@ -23,7 +24,7 @@ async function waitForWizard(page:Page){await expect.poll(()=>page.locator('.com
 test.describe.serial('DEV-04A persisted complaint submission',()=>{
  test.setTimeout(120_000);
  test.beforeAll(async({browser,request})=>{
-  const page=await browser.newPage({baseURL:'http://127.0.0.1:3000'});
+  const page=await browser.newPage({baseURL:e2eAppOrigin});
   try{await page.goto('/en/register');await page.getByLabel('Full name').fill('Complaint Review Citizen');await page.getByLabel('Email address').fill(email);await fillPassword(page.locator('input[name="password"]'),password);await page.getByRole('checkbox').check();await page.locator('form').filter({has:page.locator('input[name="password"]')}).locator('button[type="submit"]').click();await expect(page).toHaveURL('/en/check-email');await page.goto(await verifyLink(request));await page.getByRole('button',{name:'Confirm email',exact:true}).click();await expect(page).toHaveURL(/state=verified/);}finally{await page.close();}
  });
  for(const locale of ['ar','fr','en'] as const)test(`${locale}: all steps, responsive reflow, submit and persisted reload`,async({page})=>{
