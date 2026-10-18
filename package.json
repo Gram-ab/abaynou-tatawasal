@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "pnpm@12.4.2",
   "engines": {
-    "node": ">=22.14.0"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1",
@@ -23,7 +23,9 @@
     "email:drain": "tsx scripts/process-email-outbox.ts --once",
     "email:worker": "tsx scripts/process-email-outbox.ts --watch",
     "staff:bootstrap": "tsx scripts/bootstrap-local-staff.ts",
-    "staff:authority": "tsx scripts/manage-staff-authority.ts"
+    "staff:authority": "tsx scripts/manage-staff-authority.ts",
+    "health:check": "tsx scripts/check-local-health.ts",
+    "health:rehearse": "tsx scripts/rehearse-local-health.ts"
   },
   "dependencies": {
     "@fontsource/ibm-plex-sans-arabic": "5.3.0",

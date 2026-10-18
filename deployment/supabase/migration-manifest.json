@@ -1,0 +1,113 @@
+{
+  "preparedOn": "2026-10-16",
+  "projectRef": "vdpflzhsohhvvwdrjzhd",
+  "region": "West EU (Ireland), owner-confirmed",
+  "status": "PREPARATION ONLY - not applied",
+  "migrationCount": 26,
+  "migrations": [
+    {
+      "file": "20260919000100_identity_audit.sql",
+      "sha256": "6b86562aaa27ce62554d16ede0c28580935c94b0a3c51f99bd6373b79d576b99"
+    },
+    {
+      "file": "20260919000200_public_publications.sql",
+      "sha256": "af39b4210db60e4fc06f5140b001338e750d7c9f06d77a6d837354272a65086e"
+    },
+    {
+      "file": "20260919000300_commune_settings.sql",
+      "sha256": "2e36c6b46f1072fcc51357f5abbf0330120c6421b549ea0ac40e95a08c8d1549"
+    },
+    {
+      "file": "20260919000400_fixed_public_pages.sql",
+      "sha256": "d8064f5341228e0f056f6b291c28a7b65894ec472627b1b905dbbb0162a5fafb"
+    },
+    {
+      "file": "20260920000100_citizen_sessions.sql",
+      "sha256": "899cc5f02efbd6b90c274e17ea562ea14a2df30cdae40e76ca582f6a4e374747"
+    },
+    {
+      "file": "20260920000200_legal_acknowledgements.sql",
+      "sha256": "603e394e2e1795fe3027dcd7016fb98848086b2f4104596cae7357191293b77f"
+    },
+    {
+      "file": "20260920000300_citizen_identity_commands.sql",
+      "sha256": "b7dfdfd102ce68f33fd87b7c880c7f3c2c45f9ceba53b31d764aac1a44414cfd"
+    },
+    {
+      "file": "20260922000100_commune_auth.sql",
+      "sha256": "0d7d43fcba4fe62d82f550624bf8ec7d585e336581c9855ec840cacc084bb136"
+    },
+    {
+      "file": "20260926000100_canonical_catalogues.sql",
+      "sha256": "470899add107b3e163ccc9237f4a0b32e975a9c9befd47e0977abd0c25eaec77"
+    },
+    {
+      "file": "20260926000200_complaint_persistence.sql",
+      "sha256": "477654c46ad90cdf8ae00c6c6cba2532e46c6ecefc74bedd82164b7e8eeba144"
+    },
+    {
+      "file": "20260926000300_complaint_commands.sql",
+      "sha256": "7cda2b0dc193aefc4ff3761dab31d594d92288ea98c02c43c9bd42b43f6f75a0"
+    },
+    {
+      "file": "20260926000400_citizen_notifications.sql",
+      "sha256": "03475382d2d9d8ac78209387ce994b8fc7ffa4369fc92bbd7bed1325bed60597"
+    },
+    {
+      "file": "20260926000500_email_outbox.sql",
+      "sha256": "02dadfc9610f93a4501b892a41325443f2857300fd2b874eaebed8b553a22d8e"
+    },
+    {
+      "file": "20260926000600_complaint_receipt_integration.sql",
+      "sha256": "98343ff587e5b180b2a7192c4d757c8540b06d1a8f76dedb66326d2aa6a8d8db"
+    },
+    {
+      "file": "20260927000100_complaint_tracking_projections.sql",
+      "sha256": "010e4e1b6aac5892a8c0e930658c1925f4972d06a1a21bbd9906dc5a95153d1e"
+    },
+    {
+      "file": "20260927000200_shared_workload_notifications.sql",
+      "sha256": "5ff1a802bbb0a7ca3d04cada42a99bcc3c8a4d048899ba3de6d32dffb3ba87d3"
+    },
+    {
+      "file": "20260927000300_pre_review_commands.sql",
+      "sha256": "606cb2bb448fd742107a25adc82ae6acdf083082a9b5f0acc81c787a212554d3"
+    },
+    {
+      "file": "20260928000100_response_versions.sql",
+      "sha256": "65ca336103b40ab2b58afbd2e757d8fa1c768eb8a757b7e8802e55dfdda33c19"
+    },
+    {
+      "file": "20260928000200_complaint_lifecycle.sql",
+      "sha256": "6ad18612c12a0c5d6fc78475e3ae2847120e241e6abce2de0540024a28af847e"
+    },
+    {
+      "file": "20260929000100_staff_administration.sql",
+      "sha256": "f6efddf5db73313255029f650a0ec36595b756bc5af54c490407601904302f58"
+    },
+    {
+      "file": "20260929000200_staff_authority.sql",
+      "sha256": "6a8737b7e9f008a3d3eb27ebbd3e81af18567405b58e5724d4a10c71d201fb4a"
+    },
+    {
+      "file": "20260930000100_catalogue_administration.sql",
+      "sha256": "6b4925574f3ca0750dfbd6142c8b4f00abae5ee4763859dfe47aa49b8d283e9a"
+    },
+    {
+      "file": "20261001000100_public_content_administration.sql",
+      "sha256": "8663a434968c790dc2f567088ff7403c2c37e0e1f1993e85a3c046611a990c32"
+    },
+    {
+      "file": "20261002000100_citizen_administration.sql",
+      "sha256": "28710db81debd04adc0b90d087a3884f145547600661638d2a8286f9c01c2d4d"
+    },
+    {
+      "file": "20261015000100_targeted_staff_auth_reads.sql",
+      "sha256": "1ee5b915186ce32e4f61508517ec088fde59702cab20a439c046aed4c77e9646"
+    },
+    {
+      "file": "20261015000200_commune_complaint_paging.sql",
+      "sha256": "b7b2bbf5947d59c0d170d880ae12755d13065b2f49d9a7ef34469397076308b9"
+    }
+  ]
+}

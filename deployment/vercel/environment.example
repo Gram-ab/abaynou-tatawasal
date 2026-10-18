@@ -1,0 +1,19 @@
+# Names/non-secret defaults only. Enter values directly in Vercel settings.
+# Do not fill/save this file with real credentials or copy .env.local to Vercel.
+# Dedicated staging project; restrict its environment scopes.
+ENABLE_EXPERIMENTAL_COREPACK=1
+APP_ENV=staging
+APP_ORIGIN=
+SUPABASE_URL=https://vdpflzhsohhvvwdrjzhd.supabase.co
+SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+DATABASE_URL=
+DATABASE_CA_CERT=
+AUTH_COOKIE_SECRET=
+COMMAND_FINGERPRINT_SECRET=
+
+# Worker-only configuration belongs on the separate worker host:
+# MAILER_DATABASE_URL, same DATABASE_CA_CERT and SUPABASE_URL,
+# APP_ENV, APP_ORIGIN, SMTP provider settings. No worker schedule is enabled here.
+# Use 07-runtime-credentials.ps1 -CopyConnection app_web / -CopyCa / -NewSecret
+# to transfer values privately; keep the worker password off the web app.
