@@ -1,0 +1,20 @@
+// @vitest-environment jsdom
+import React from 'react';
+import {afterEach,beforeEach,expect,it,vi} from 'vitest';
+import {cleanup,fireEvent,render,screen,within,waitFor} from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+import {randomUUID} from 'node:crypto';
+import {disposablePassword} from '../support/disposable-password';
+const m=vi.hoisted(()=>({locale:'en',promote:vi.fn()}));
+vi.mock('next-intl',()=>({useLocale:()=>m.locale}));
+vi.mock('@/features/staff-admin/promotion-actions',()=>({promoteAgent:m.promote}));
+import {AgentPromotionForm} from '@/features/staff-admin/promotion-form';
+import {staffPromotionCopy} from '@/features/staff-admin/promotion-copy';
+const staff={profile_id:randomUUID(),full_name:'Test Agent',email:'agent@example.test',revision:4,role:'AGENT',access_status:'ACTIVE',email_confirmed_at:new Date(),activation_pending:false};
+beforeEach(()=>{m.locale='en';vi.clearAllMocks();HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};});
+afterEach(cleanup);
+it('shows the platform confirmation and target identity before sending anything',()=>{render(<AgentPromotionForm staff={staff}/>);const form=screen.getByRole('button',{name:staffPromotionCopy.en.title}).closest('form')!;fireEvent.submit(form);const dialog=screen.getByRole('dialog',{name:staffPromotionCopy.en.title});expect(within(dialog).getByText(/Test Agent — agent@example.test/)).toBeVisible();expect(dialog).toHaveTextContent('sessions will end');expect(m.promote).not.toHaveBeenCalled();fireEvent.click(dialog.querySelector('button.ghost')!);expect(dialog).not.toHaveAttribute('open');expect(m.promote).not.toHaveBeenCalled();});
+it('requires current password, reason and a linked accessible confirmation checkbox',()=>{render(<AgentPromotionForm staff={staff}/>);expect(screen.getByLabelText('Your current password')).toHaveAttribute('type','password');expect(screen.getByLabelText('Your current password')).toBeRequired();expect(screen.getByLabelText('Reason')).toBeRequired();const check=screen.getByRole('checkbox',{name:staffPromotionCopy.en.acknowledgement});expect(check).toBeRequired();fireEvent.click(check.closest('label')!);expect(check).toBeChecked();});
+it.each([{access_status:'DISABLED'},{email_confirmed_at:null},{activation_pending:true},{activation_pending:undefined}])('hides promotion until the active account has completed activation',change=>{const {container}=render(<AgentPromotionForm staff={{...staff,...change}}/>);expect(container.querySelector('form')).toBeNull();});
+it.each(['ar','fr','en'] as const)('uses complete %s copy',locale=>{m.locale=locale;render(<AgentPromotionForm staff={staff}/>);expect(screen.getByRole('heading',{name:staffPromotionCopy[locale].title})).toBeVisible();expect(screen.getByRole('checkbox',{name:staffPromotionCopy[locale].acknowledgement})).toBeRequired();});
+it('uses the shared success popup after a successful action',async()=>{m.promote.mockResolvedValue({status:'success',code:'success'});const {rerender}=render(<AgentPromotionForm staff={staff}/>);const form=screen.getByRole('button',{name:staffPromotionCopy.en.title}).closest('form')!;fireEvent.change(screen.getByLabelText('Reason'),{target:{value:'Delegated administration review'}});fireEvent.change(screen.getByLabelText('Your current password'),{target:{value:disposablePassword()}});fireEvent.click(screen.getByRole('checkbox'));fireEvent.submit(form);fireEvent.click(within(screen.getByRole('dialog',{name:staffPromotionCopy.en.title})).getByRole('button',{name:staffPromotionCopy.en.title}));await waitFor(()=>expect(m.promote).toHaveBeenCalledTimes(1));expect(await screen.findByRole('dialog',{name:'Operation completed'})).toHaveTextContent(staffPromotionCopy.en.success);rerender(<AgentPromotionForm staff={{...staff,role:'ADMIN',revision:5}}/>);expect(screen.getByRole('dialog',{name:'Operation completed'})).toBeVisible();expect(screen.queryByRole('heading',{name:staffPromotionCopy.en.title})).toBeNull();});

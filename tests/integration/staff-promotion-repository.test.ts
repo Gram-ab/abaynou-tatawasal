@@ -1,0 +1,18 @@
+import {beforeEach,expect,it,vi} from 'vitest';
+import {randomBytes,randomUUID} from 'node:crypto';
+const m=vi.hoisted(()=>({query:vi.fn(),begin:vi.fn()}));
+vi.mock('server-only',()=>({}));
+vi.mock('@/shared/db/public',()=>({publicDatabase:()=>({begin:m.begin})}));
+import {promoteAgentAuthority} from '@/server/staff/promotion';
+import type {ApplicationUser} from '@/server/auth/application-user';
+const actor={state:'VALID',role:'ADMIN',authUserId:randomUUID(),providerSessionId:randomUUID(),profileId:randomUUID(),digest:randomBytes(32)} as ApplicationUser;
+const input={id:randomUUID(),email:'agent@example.test',revision:4,reason:'Approved administration duties'};
+const target={email:input.email,revision:4,role:'AGENT',access_status:'ACTIVE',email_confirmed_at:'confirmed'};
+beforeEach(()=>{vi.resetAllMocks();m.begin.mockImplementation(async callback=>callback(m.query));m.query.mockResolvedValueOnce([target]).mockResolvedValueOnce([{activation_pending:false}]).mockResolvedValueOnce([{role:'ADMIN',access_status:'ACTIVE',revision:5}]);});
+it('performs bounded reads and only PROMOTE through the existing authority transaction',async()=>{await promoteAgentAuthority(actor,input);expect(m.begin).toHaveBeenCalledTimes(1);expect(m.query).toHaveBeenCalledTimes(3);const [strings,...values]=m.query.mock.calls[2];expect(strings.join('?')).toContain('app.manage_staff_authority');expect(values.slice(3)).toEqual([input.id,4,'PROMOTE',input.reason]);});
+it.each(['AGENT','CITIZEN'])('rejects non-Admin actors %s before opening a transaction',async role=>{await expect(promoteAgentAuthority({...actor,role} as ApplicationUser,input)).rejects.toMatchObject({code:'42501'});expect(m.begin).not.toHaveBeenCalled();});
+it('rejects self-targeting in the data access boundary',async()=>{await expect(promoteAgentAuthority(actor,{...input,id:actor.profileId})).rejects.toMatchObject({code:'42501'});expect(m.begin).not.toHaveBeenCalled();});
+it.each([{revision:5},{email:'other@example.test'}])('rejects a stale or substituted target',async change=>{m.query.mockReset().mockResolvedValueOnce([{...target,...change}]);await expect(promoteAgentAuthority(actor,input)).rejects.toMatchObject({code:'40001'});expect(m.query).toHaveBeenCalledTimes(1);});
+it.each([{role:'ADMIN'},{role:'CITIZEN'},{access_status:'DISABLED'},{email_confirmed_at:null}])('refuses ineligible accounts before the command',async change=>{m.query.mockReset().mockResolvedValueOnce([{...target,...change}]).mockResolvedValueOnce([{activation_pending:false}]);await expect(promoteAgentAuthority(actor,input)).rejects.toMatchObject({code:'23514'});expect(m.query).toHaveBeenCalledTimes(2);});
+it.each([[{activation_pending:true}],[],[{activation_pending:null}]])('fails closed for pending or unavailable activation evidence',async (...rows)=>{m.query.mockReset().mockResolvedValueOnce([target]).mockResolvedValueOnce(rows);await expect(promoteAgentAuthority(actor,input)).rejects.toMatchObject({code:'23514'});expect(m.query).toHaveBeenCalledTimes(2);});
+it('rolls back an unexpected command result rather than returning false success',async()=>{m.query.mockReset().mockResolvedValueOnce([target]).mockResolvedValueOnce([{activation_pending:false}]).mockResolvedValueOnce([{role:'AGENT',access_status:'ACTIVE',revision:4}]);await expect(promoteAgentAuthority(actor,input)).rejects.toThrow('Promotion result unavailable');});

@@ -24,6 +24,7 @@
     "email:worker": "tsx scripts/process-email-outbox.ts --watch",
     "staff:bootstrap": "tsx scripts/bootstrap-local-staff.ts",
     "staff:authority": "tsx scripts/manage-staff-authority.ts",
+    "staff:promote:hosted": "tsx scripts/promote-hosted-admin.ts",
     "health:check": "tsx scripts/check-local-health.ts",
     "health:rehearse": "tsx scripts/rehearse-local-health.ts"
   },

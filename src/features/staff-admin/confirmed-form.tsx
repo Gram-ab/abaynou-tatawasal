@@ -6,8 +6,9 @@ import {ConfirmationDialog} from '@/shared/ui/confirmation-dialog';
 import {initialStaffAdminState,type StaffAdminState} from './model';
 import {staffAdminCopy,type StaffAdminLocale} from './copy';
 import {staffFeedbackCopy} from './feedback-copy';
+import {staffPromotionCopy} from './promotion-copy';
 
-export function StaffConfirmedForm({action,title,message,successMessage,target,children,className='commune-form commune-card',danger=false}:{action:(state:StaffAdminState,form:FormData)=>Promise<StaffAdminState>;title:string;message:string;successMessage:string;target?:string;children:ReactNode;className?:string;danger?:boolean}){
+export function StaffConfirmedForm({action,title,message,successMessage,target,children,className='commune-form commune-card',danger=false,available=true,unavailableContent=null}:{action:(state:StaffAdminState,form:FormData)=>Promise<StaffAdminState>;title:string;message:string;successMessage:string;target?:string;children:ReactNode;className?:string;danger?:boolean;available?:boolean;unavailableContent?:ReactNode}){
  const locale=useLocale() as StaffAdminLocale,c=staffAdminCopy[locale],feedback=staffFeedbackCopy[locale];
  const [state,submit,pending]=useActionState(action,initialStaffAdminState);
  const form=useRef<HTMLFormElement>(null),approved=useRef(false);
@@ -16,7 +17,7 @@ export function StaffConfirmedForm({action,title,message,successMessage,target,c
  const [dismissed,setDismissed]=useState<StaffAdminState|null>(null);
  const closeSuccess=()=>{setDismissed(state);if(state.redirectTo)window.location.assign(state.redirectTo);};
  return <>
-  <form ref={form} action={submit} className={className} aria-busy={pending} onSubmit={event=>{
+  {available?<form ref={form} action={submit} className={className} aria-busy={pending} onSubmit={event=>{
    if(pending){event.preventDefault();return;}
    if(approved.current){approved.current=false;return;}
    event.preventDefault();
@@ -26,9 +27,9 @@ export function StaffConfirmedForm({action,title,message,successMessage,target,c
    setConfirmation({title,message:[message,recipient,destination?`→ ${String(destination)}`:''].filter(Boolean).join('\n'),success:successMessage,danger});
   }}>
    {children}
-   {state.code&&<p className={`form-result ${state.status}`} role={state.status==='error'?'alert':'status'}>{c[state.code as keyof typeof c]??c.failed}</p>}
+   {state.code&&<p className={`form-result ${state.status}`} role={state.status==='error'?'alert':'status'}>{state.code==='ineligible'?staffPromotionCopy[locale].ineligible:c[state.code as keyof typeof c]??c.failed}</p>}
    <button type="submit" className={`btn${danger?' danger':''}`} disabled={pending}>{pending?feedback.pending:title}</button>
-  </form>
+  </form>:unavailableContent}
   <ConfirmationDialog open={Boolean(confirmation)} title={confirmation?.title??title} message={confirmation?.message??message} confirmLabel={confirmation?.title??title} cancelLabel={feedback.cancel} danger={confirmation?.danger??danger} onCancel={()=>setConfirmation(null)} onConfirm={()=>{
    if(!confirmation||pending)return;
    setLastConfirmation(confirmation);setConfirmation(null);

@@ -28,7 +28,7 @@ If Auth creation succeeded but profile creation failed, an unusable marked Auth-
 
 If profile/audit creation succeeded but email delivery failed, use the deployed Commune forgot-password page to request a new link. Do not bootstrap again. Provider acceptance of an email is not proof of inbox delivery; Gmail spam filtering remains a separate delivery issue.
 
-Additional Admins must use controlled authenticated staff-authority promotion after the initial Admin exists. This initializer always refuses a second bootstrap. The existing promotion CLI is local-only and still needs a separately reviewed hosted adaptation; no public Admin-promotion UI is introduced here.
+Additional Admins must use controlled authenticated staff-authority promotion after the initial Admin exists. This initializer always refuses a second bootstrap. After the Agent completes activation, use the protected Admin dashboard promotion action, or the optional `pnpm staff:promote:hosted` command. See [Hosted Admin promotion](hosted-admin-promotion.md).
 
 ## Verification
 
